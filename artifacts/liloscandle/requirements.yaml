@@ -1,0 +1,23 @@
+packages:
+  "framer-motion": "For premium, Apple-like scroll animations and page transitions"
+  "uuid": "To generate unique cart session IDs"
+  "@types/uuid": "Types for uuid"
+  "react-hook-form": "For robust checkout and order forms"
+  "@hookform/resolvers": "For Zod validation with react-hook-form"
+  "zod": "For form schema validation"
+
+images:
+  - path: "artifacts/liloscandle/public/images/hero-bg.png"
+    description: "Minimalist ultra premium interior, warm low lighting, a concrete cube candle on a minimalist wooden table, soft purple wax visible, editorial photography style, high resolution, lots of negative space"
+    aspect_ratio: "16:9"
+  - path: "artifacts/liloscandle/public/images/about-maker.png"
+    description: "Artisan hands carefully pouring warm purple wax into a square concrete mold, rustic but elegant bright workshop, cinematic warm lighting, editorial style"
+    aspect_ratio: "16:9"
+  - path: "artifacts/liloscandle/public/images/ingredients.png"
+    description: "Abstract elegant macro shot of natural soy wax flakes and fresh dark amarena cherries, soft lighting, cream and soft purple tones, very aesthetic"
+    aspect_ratio: "4:3"
+
+notes:
+  - Using generated API hooks from @workspace/api-client-react
+  - Cart session ID is generated on first load and stored in localStorage
+  - framer-motion is used to achieve the requested "Apple-like" fluid feel
