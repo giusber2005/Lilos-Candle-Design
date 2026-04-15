@@ -5,6 +5,10 @@ import { eq } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+function parseImages(raw: string | null | undefined): string[] {
+  try { return JSON.parse(raw ?? "[]"); } catch { return []; }
+}
+
 function formatProduct(product: any, variants: any[]) {
   return {
     id: product.id,
@@ -12,9 +16,9 @@ function formatProduct(product: any, variants: any[]) {
     slug: product.slug,
     description: product.description,
     shortDescription: product.shortDescription,
-    price: parseFloat(product.price),
+    price: product.price,
     imageUrl: product.imageUrl,
-    images: product.images || [],
+    images: parseImages(product.images),
     size: product.size,
     material: product.material,
     burnTime: product.burnTime,

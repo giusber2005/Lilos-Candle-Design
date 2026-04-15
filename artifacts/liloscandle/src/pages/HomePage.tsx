@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Star, ChevronDown } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { useContent, useJsonContent } from "@/lib/content-context";
 
 function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "large" | "small"; color?: string }) {
   const w = size === "large" ? 200 : 120;
@@ -22,26 +23,25 @@ function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "larg
   );
 }
 
-const reviews = [
-  {
-    name: "Giulia M.",
-    text: "Semplicemente bellissima. L'aroma di amarena è delicato e avvolgente. Il design in cemento è unico nel suo genere.",
-    rating: 5,
-  },
-  {
-    name: "Marco T.",
-    text: "Ho regalato la Big Boy ad una amica — era entusiasta. La qualità è eccezionale, si vede che è fatta con cura.",
-    rating: 5,
-  },
-  {
-    name: "Sofia R.",
-    text: "La Lil One è perfetta per la mia scrivania. Piccola ma intensa. Tornerò sicuramente ad acquistare.",
-    rating: 5,
-  },
+const defaultProcessSteps = [
+  { n: "01", title: "Il vaso", desc: "Modellato in cemento puro, con texture naturale." },
+  { n: "02", title: "La cera", desc: "Cera di alta qualità, colorata a mano." },
+  { n: "03", title: "Il profumo", desc: "Fragranze selezionate, intense e durature." },
+  { n: "04", title: "La cura", desc: "Ogni pezzo è rifinito singolarmente." },
+];
+
+const defaultReviews = [
+  { name: "Giulia M.", text: "Semplicemente bellissima. L'aroma di amarena è delicato e avvolgente. Il design in cemento è unico nel suo genere.", rating: 5 },
+  { name: "Marco T.", text: "Ho regalato la Big Boy ad una amica — era entusiasta. La qualità è eccezionale, si vede che è fatta con cura.", rating: 5 },
+  { name: "Sofia R.", text: "La Lil One è perfetta per la mia scrivania. Piccola ma intensa. Tornerò sicuramente ad acquistare.", rating: 5 },
 ];
 
 export default function HomePage() {
   useScrollReveal();
+  const c = useContent();
+  const processSteps = useJsonContent("process_steps", defaultProcessSteps);
+  const reviews = useJsonContent("reviews", defaultReviews);
+
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -70,40 +70,35 @@ export default function HomePage() {
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
         <div
           className="absolute inset-0"
-          style={{
-            background: "linear-gradient(160deg, #2C2826 0%, #3D3530 40%, #4A3D35 70%, #5C4A40 100%)",
-          }}
+          style={{ background: "linear-gradient(160deg, #2C2826 0%, #3D3530 40%, #4A3D35 70%, #5C4A40 100%)" }}
         />
         <div className="absolute inset-0 opacity-20"
-          style={{
-            backgroundImage: "radial-gradient(circle at 60% 40%, #7C6B8A 0%, transparent 60%)",
-          }}
+          style={{ backgroundImage: "radial-gradient(circle at 60% 40%, #7C6B8A 0%, transparent 60%)" }}
         />
         <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
           <p className="text-[#C5BEB8] text-xs uppercase tracking-[0.4em] mb-8 font-light">
-            Artigianale · Italiana
+            {c["hero_badge"] || "Artigianale · Italiana"}
           </p>
           <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-8">
-            Luce.
+            {c["hero_title_1"] || "Luce."}
             <br />
-            <span className="italic text-[#C5BEB8]">Profumo.</span>
+            <span className="italic text-[#C5BEB8]">{c["hero_title_2"] || "Profumo."}</span>
             <br />
-            Artigianato.
+            {c["hero_title_3"] || "Artigianato."}
           </h1>
           <p className="text-[#A89E96] text-lg md:text-xl max-w-xl mx-auto mb-12 font-light leading-relaxed">
-            Candele fatte a mano in vaso di cemento. Un design geometrico e
-            minimalista che porta luce e calore nei tuoi spazi.
+            {c["hero_subtitle"] || "Candele fatte a mano in vaso di cemento. Un design geometrico e minimalista che porta luce e calore nei tuoi spazi."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/products">
               <button className="group bg-white text-[#2C2826] px-8 py-4 text-sm uppercase tracking-[0.15em] font-medium hover:bg-[#F0EBE3] transition-all duration-300 flex items-center gap-3 rounded-none">
-                Scopri le candele
+                {c["hero_cta_primary"] || "Scopri le candele"}
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
             <Link href="/products">
               <button className="border border-white/40 text-white px-8 py-4 text-sm uppercase tracking-[0.15em] font-light hover:bg-white/10 transition-all duration-300 rounded-none">
-                Shop Now
+                {c["hero_cta_secondary"] || "Shop Now"}
               </button>
             </Link>
           </div>
@@ -117,30 +112,20 @@ export default function HomePage() {
       <section className="py-28 px-6 bg-[#FAF8F5]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20 reveal">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">Le nostre candele</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-[#2C2826]">Collezione Corrente</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">
+              {c["collection_eyebrow"] || "Le nostre candele"}
+            </p>
+            <h2 className="font-serif text-4xl md:text-5xl text-[#2C2826]">
+              {c["collection_title"] || "Collezione Corrente"}
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {[
-              {
-                slug: "big-boy-candle",
-                name: "Big Boy",
-                desc: "La candela grande. Per ambienti e momenti speciali.",
-                price: "€ 39,90",
-                size: "large" as const,
-              },
-              {
-                slug: "lil-one-candle",
-                name: "Lil One",
-                desc: "La candela piccola. Perfetta ovunque tu voglia luce.",
-                price: "€ 6,50",
-                size: "small" as const,
-              },
+              { slug: "big-boy-candle", name: "Big Boy", desc: "La candela grande. Per ambienti e momenti speciali.", price: "€ 39,90", size: "large" as const },
+              { slug: "lil-one-candle", name: "Lil One", desc: "La candela piccola. Perfetta ovunque tu voglia luce.", price: "€ 6,50", size: "small" as const },
             ].map((p, i) => (
               <Link key={p.slug} href={`/products/${p.slug}`}>
-                <div
-                  className={`group cursor-pointer reveal reveal-delay-${i + 1}`}
-                >
+                <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
                   <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)]">
                     <div className="transform group-hover:scale-105 transition-transform duration-700">
                       <CandlePlaceholder size={p.size} />
@@ -173,24 +158,21 @@ export default function HomePage() {
       <section className="py-28 px-6 bg-[#2C2826]">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div className="reveal">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-6">Chi siamo</p>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-6">
+              {c["brand_story_eyebrow"] || "Chi siamo"}
+            </p>
             <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight mb-8">
-              Ogni candela racconta
-              <span className="italic text-[#C5BEB8]"> una storia.</span>
+              {c["brand_story_title"] || "Ogni candela racconta una storia."}
             </h2>
             <p className="text-[#8B8680] text-lg leading-relaxed mb-6 font-light">
-              Nasce dall'amore per il design e il profumo. Ogni candela LilosCandle
-              è modellata in un contenitore cubico di cemento fatto a mano, riempito
-              con cera naturale e fragranze selezionate.
+              {c["brand_story_p1"] || "Nasce dall'amore per il design e il profumo. Ogni candela LilosCandle è modellata in un contenitore cubico di cemento fatto a mano, riempito con cera naturale e fragranze selezionate."}
             </p>
             <p className="text-[#8B8680] leading-relaxed font-light">
-              Il cemento — materiale grezzo e moderno — incontra la morbidezza
-              della cera colorata per creare un oggetto unico, capace di trasformare
-              qualsiasi ambiente.
+              {c["brand_story_p2"] || "Il cemento — materiale grezzo e moderno — incontra la morbidezza della cera colorata per creare un oggetto unico, capace di trasformare qualsiasi ambiente."}
             </p>
             <Link href="/about">
               <button className="group mt-10 flex items-center gap-3 text-white text-sm uppercase tracking-[0.2em] font-light hover:text-[#C5BEB8] transition-colors">
-                La nostra storia
+                {c["brand_story_cta"] || "La nostra storia"}
                 <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </button>
             </Link>
@@ -209,18 +191,14 @@ export default function HomePage() {
       {/* Process teaser */}
       <section className="py-28 px-6 bg-[#F0EBE3]">
         <div className="max-w-6xl mx-auto text-center">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4 reveal">Il processo</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4 reveal">
+            {c["process_eyebrow"] || "Il processo"}
+          </p>
           <h2 className="font-serif text-4xl md:text-5xl text-[#2C2826] mb-16 reveal">
-            Fatte con cura,<br />
-            <span className="italic">una alla volta.</span>
+            {c["process_title"] || "Fatte con cura, una alla volta."}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { n: "01", title: "Il vaso", desc: "Modellato in cemento puro, con texture naturale." },
-              { n: "02", title: "La cera", desc: "Cera di alta qualità, colorata a mano." },
-              { n: "03", title: "Il profumo", desc: "Fragranze selezionate, intense e durature." },
-              { n: "04", title: "La cura", desc: "Ogni pezzo è rifinito singolarmente." },
-            ].map((step, i) => (
+            {processSteps.map((step, i) => (
               <div key={step.n} className={`reveal reveal-delay-${i + 1}`}>
                 <div className="font-serif text-5xl text-[#C5BEB8] mb-4">{step.n}</div>
                 <h3 className="font-serif text-xl text-[#2C2826] mb-2">{step.title}</h3>
@@ -243,8 +221,12 @@ export default function HomePage() {
       <section className="py-28 px-6 bg-[#FAF8F5]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">Recensioni</p>
-            <h2 className="font-serif text-4xl text-[#2C2826]">Cosa dicono di noi</h2>
+            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">
+              {c["reviews_eyebrow"] || "Recensioni"}
+            </p>
+            <h2 className="font-serif text-4xl text-[#2C2826]">
+              {c["reviews_title"] || "Cosa dicono di noi"}
+            </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {reviews.map((r, i) => (
@@ -267,16 +249,18 @@ export default function HomePage() {
       {/* Newsletter */}
       <section id="newsletter" className="py-28 px-6 bg-[#2C2826]">
         <div className="max-w-2xl mx-auto text-center reveal">
-          <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">Newsletter</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">
+            {c["newsletter_eyebrow"] || "Newsletter"}
+          </p>
           <h2 className="font-serif text-4xl text-white mb-6">
-            Sii il primo a sapere.
+            {c["newsletter_title"] || "Sii il primo a sapere."}
           </h2>
           <p className="text-[#8B8680] mb-10 font-light">
-            Nuovi aromi, nuove collezioni e offerte riservate agli iscritti.
+            {c["newsletter_subtitle"] || "Nuovi aromi, nuove collezioni e offerte riservate agli iscritti."}
           </p>
           {subscribed ? (
             <div className="border border-[#7C6B8A] px-8 py-4 text-[#C5BEB8] font-serif italic">
-              Grazie! Sei iscritto alla nostra newsletter.
+              {c["newsletter_success"] || "Grazie! Sei iscritto alla nostra newsletter."}
             </div>
           ) : (
             <form onSubmit={handleNewsletter} className="flex flex-col sm:flex-row gap-3">
@@ -293,7 +277,7 @@ export default function HomePage() {
                 disabled={submitting}
                 className="bg-[#7C6B8A] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
               >
-                {submitting ? "..." : "Iscriviti"}
+                {submitting ? "..." : (c["newsletter_button"] || "Iscriviti")}
               </button>
             </form>
           )}

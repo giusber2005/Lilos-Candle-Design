@@ -1,0 +1,15 @@
+{
+  "buildCommand": "pnpm --filter @workspace/liloscandle run build",
+  "outputDirectory": "artifacts/liloscandle/dist/public",
+  "installCommand": "pnpm install",
+  "framework": null,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" }
+  ],
+  "functions": {
+    "api/index.ts": {
+      "runtime": "@vercel/node@5",
+      "maxDuration": 30
+    }
+  }
+}

@@ -8,7 +8,8 @@ import {
   productsTable,
   productVariantsTable,
 } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
+import Stripe from "stripe";
 
 const router: IRouter = Router();
 
@@ -39,21 +40,28 @@ async function buildOrderResponse(order: any) {
     id: order.id,
     orderNumber: order.orderNumber,
     status: order.status,
-    totalAmount: parseFloat(order.totalAmount),
-    shippingAmount: parseFloat(order.shippingAmount),
+    totalAmount: order.totalAmount,
+    shippingAmount: order.shippingAmount,
     shippingMethod: order.shippingMethod,
     paymentMethod: order.paymentMethod,
-    shippingAddress: order.shippingAddress,
+    shippingAddress: typeof order.shippingAddress === "string"
+      ? JSON.parse(order.shippingAddress)
+      : order.shippingAddress,
     trackingNumber: order.trackingNumber,
-    createdAt: order.createdAt.toISOString(),
-    updatedAt: order.updatedAt.toISOString(),
+    githubIssueNumber: order.githubIssueNumber,
+    createdAt: order.createdAt instanceof Date
+      ? order.createdAt.toISOString()
+      : new Date(order.createdAt).toISOString(),
+    updatedAt: order.updatedAt instanceof Date
+      ? order.updatedAt.toISOString()
+      : new Date(order.updatedAt).toISOString(),
     items: items.map((item) => ({
       id: item.id,
       orderId: item.orderId,
       productId: item.productId,
       variantId: item.variantId,
       quantity: item.quantity,
-      unitPrice: parseFloat(item.unitPrice),
+      unitPrice: item.unitPrice,
       productName: item.productName,
       variantColor: item.variantColor,
       variantAroma: item.variantAroma,
@@ -61,13 +69,88 @@ async function buildOrderResponse(order: any) {
   };
 }
 
+async function createGitHubIssue(order: any, items: any[]): Promise<string | null> {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPO;
+  if (!token || !repo) return null;
+
+  const address = typeof order.shippingAddress === "string"
+    ? JSON.parse(order.shippingAddress)
+    : order.shippingAddress;
+
+  const itemsList = items
+    .map((i) => `- ${i.productName} (${i.variantColor}, ${i.variantAroma}) × ${i.quantity} — €${i.unitPrice}`)
+    .join("\n");
+
+  const body = `## Nuovo Ordine: ${order.orderNumber}
+
+**Cliente:** ${address.firstName} ${address.lastName}
+**Email:** ${address.email}
+**Telefono:** ${address.phone || "—"}
+
+**Indirizzo di spedizione:**
+${address.address}
+${address.city}, ${address.postalCode}
+${address.country}
+
+**Prodotti:**
+${itemsList}
+
+**Spedizione:** ${order.shippingMethod} — €${Number(order.shippingAmount).toFixed(2)}
+**Totale:** €${Number(order.totalAmount).toFixed(2)}
+**Metodo di pagamento:** ${order.paymentMethod}
+
+**Stato:** ${order.status}
+`;
+
+  try {
+    const response = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({
+        title: `[Ordine] ${order.orderNumber} — ${address.firstName} ${address.lastName}`,
+        body,
+        labels: ["ordine", "nuovo-ordine"],
+      }),
+    });
+    if (!response.ok) {
+      console.error("GitHub issue creation failed:", await response.text());
+      return null;
+    }
+    const data = await response.json() as { number: number };
+    return String(data.number);
+  } catch (err) {
+    console.error("GitHub issue error:", err);
+    return null;
+  }
+}
+
 router.post("/", async (req, res) => {
   try {
-    const { sessionId, shippingAddress, shippingMethod, paymentMethod, notes } =
-      req.body;
+    const {
+      sessionId,
+      shippingAddress,
+      shippingMethod,
+      paymentMethod,
+      notes,
+      stripePaymentIntentId,
+    } = req.body;
 
     if (!sessionId || !shippingAddress || !shippingMethod || !paymentMethod) {
       return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    if (stripePaymentIntentId && process.env.STRIPE_SECRET_KEY) {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-02-25.clover" });
+      const pi = await stripe.paymentIntents.retrieve(stripePaymentIntentId);
+      if (pi.status !== "succeeded") {
+        return res.status(400).json({ error: "Pagamento non completato" });
+      }
     }
 
     const [cart] = await db
@@ -103,7 +186,7 @@ router.post("/", async (req, res) => {
     );
 
     const subtotal = enrichedItems.reduce(
-      (sum, { item, product }) => sum + parseFloat(product.price) * item.quantity,
+      (sum, { item, product }) => sum + product.price * item.quantity,
       0
     );
 
@@ -116,32 +199,49 @@ router.post("/", async (req, res) => {
       .values({
         orderNumber,
         status: "confirmed",
-        totalAmount: total.toFixed(2),
-        shippingAmount: shippingCost.toFixed(2),
+        totalAmount: total,
+        shippingAmount: shippingCost,
         shippingMethod,
         paymentMethod,
-        shippingAddress,
+        shippingAddress: JSON.stringify(shippingAddress),
         customerEmail: shippingAddress.email,
         notes: notes || null,
+        stripePaymentIntentId: stripePaymentIntentId || null,
       })
       .returning();
 
-    await Promise.all(
+    const orderItems = await Promise.all(
       enrichedItems.map(({ item, product, variant }) =>
         db.insert(orderItemsTable).values({
           orderId: order.id,
           productId: item.productId,
           variantId: item.variantId,
           quantity: item.quantity,
-          unitPrice: parseFloat(product.price).toFixed(2),
+          unitPrice: product.price,
           productName: product.name,
           variantColor: variant.color,
           variantAroma: variant.aroma,
-        })
+        }).returning()
       )
     );
 
     await db.delete(cartItemsTable).where(eq(cartItemsTable.cartId, cart.id));
+
+    const flatItems = orderItems.map(([i]) => ({
+      productName: i.productName,
+      variantColor: i.variantColor,
+      variantAroma: i.variantAroma,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+    }));
+    const issueNumber = await createGitHubIssue(order, flatItems);
+    if (issueNumber) {
+      await db
+        .update(ordersTable)
+        .set({ githubIssueNumber: issueNumber })
+        .where(eq(ordersTable.id, order.id));
+      (order as any).githubIssueNumber = issueNumber;
+    }
 
     res.status(201).json(await buildOrderResponse(order));
   } catch (err) {
@@ -159,7 +259,8 @@ router.get("/", async (req, res) => {
     const orders = await db
       .select()
       .from(ordersTable)
-      .where(eq(ordersTable.customerEmail, email));
+      .where(eq(ordersTable.customerEmail, email))
+      .orderBy(desc(ordersTable.createdAt));
 
     const result = await Promise.all(orders.map(buildOrderResponse));
     res.json(result);

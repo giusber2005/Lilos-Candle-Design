@@ -10,6 +10,10 @@ import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
 
+function parseImages(raw: string | null | undefined): string[] {
+  try { return JSON.parse(raw ?? "[]"); } catch { return []; }
+}
+
 async function getOrCreateCart(sessionId: string) {
   let [cart] = await db
     .select()
@@ -59,9 +63,9 @@ async function buildCartResponse(cart: any) {
           slug: product.slug,
           description: product.description,
           shortDescription: product.shortDescription,
-          price: parseFloat(product.price),
+          price: product.price,
           imageUrl: product.imageUrl,
-          images: product.images || [],
+          images: parseImages(product.images),
           size: product.size,
           material: product.material,
           burnTime: product.burnTime,

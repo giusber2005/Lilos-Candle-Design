@@ -1,41 +1,43 @@
-import { pgTable, text, serial, integer, numeric, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { productsTable, productVariantsTable } from "./products";
 
-export const ordersTable = pgTable("orders", {
-  id: serial("id").primaryKey(),
+export const ordersTable = sqliteTable("orders", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   orderNumber: text("order_number").notNull().unique(),
   status: text("status").notNull().default("pending"),
-  totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
-  shippingAmount: numeric("shipping_amount", { precision: 10, scale: 2 }).notNull().default("0"),
+  totalAmount: real("total_amount").notNull(),
+  shippingAmount: real("shipping_amount").notNull().default(0),
   shippingMethod: text("shipping_method").notNull(),
   paymentMethod: text("payment_method").notNull(),
-  shippingAddress: jsonb("shipping_address").notNull(),
+  shippingAddress: text("shipping_address").notNull(), // JSON string
   trackingNumber: text("tracking_number"),
   customerEmail: text("customer_email").notNull(),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  githubIssueNumber: text("github_issue_number"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
-export const orderItemsTable = pgTable("order_items", {
-  id: serial("id").primaryKey(),
+export const orderItemsTable = sqliteTable("order_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   orderId: integer("order_id").notNull().references(() => ordersTable.id),
   productId: integer("product_id").notNull().references(() => productsTable.id),
   variantId: integer("variant_id").notNull().references(() => productVariantsTable.id),
   quantity: integer("quantity").notNull(),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
+  unitPrice: real("unit_price").notNull(),
   productName: text("product_name").notNull(),
   variantColor: text("variant_color").notNull(),
   variantAroma: text("variant_aroma").notNull(),
 });
 
-export const newsletterSubscribersTable = pgTable("newsletter_subscribers", {
-  id: serial("id").primaryKey(),
+export const newsletterSubscribersTable = sqliteTable("newsletter_subscribers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   email: text("email").notNull().unique(),
   firstName: text("first_name"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
 export const insertOrderSchema = createInsertSchema(ordersTable).omit({ id: true, createdAt: true, updatedAt: true });

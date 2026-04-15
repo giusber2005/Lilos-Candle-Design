@@ -2,12 +2,17 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { ShoppingBag, MoreHorizontal, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useContent } from "@/lib/content-context";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { itemCount } = useCart();
   const [location] = useLocation();
+  const c = useContent();
+
+  const brandName = c["brand_name"] || "LilosCandle";
+  const brandTagline = c["brand_tagline"] || "Luce. Profumo. Artigianato.";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -31,25 +36,21 @@ export function Navbar() {
         }`}
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
           <Link href="/">
             <span
               className={`font-serif text-xl tracking-widest uppercase cursor-pointer transition-colors duration-300 ${
                 isLight ? "text-white" : "text-[#2C2826]"
               }`}
             >
-              LilosCandle
+              {brandName}
             </span>
           </Link>
 
-          {/* Right actions */}
           <div className="flex items-center gap-4">
             <Link href="/cart">
               <button
                 className={`relative p-2 rounded-full transition-colors ${
-                  isLight
-                    ? "text-white hover:bg-white/10"
-                    : "text-[#2C2826] hover:bg-[#F0EBE3]"
+                  isLight ? "text-white hover:bg-white/10" : "text-[#2C2826] hover:bg-[#F0EBE3]"
                 }`}
               >
                 <ShoppingBag size={20} />
@@ -64,9 +65,7 @@ export function Navbar() {
             <button
               onClick={() => setMenuOpen(true)}
               className={`p-2 rounded-full transition-colors ${
-                isLight
-                  ? "text-white hover:bg-white/10"
-                  : "text-[#2C2826] hover:bg-[#F0EBE3]"
+                isLight ? "text-white hover:bg-white/10" : "text-[#2C2826] hover:bg-[#F0EBE3]"
               }`}
             >
               <MoreHorizontal size={20} />
@@ -75,7 +74,6 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Overlay menu */}
       {menuOpen && (
         <div className="fixed inset-0 z-[100]">
           <div
@@ -107,9 +105,7 @@ export function Navbar() {
               ))}
             </nav>
             <div className="mt-auto p-6 border-t border-[#E8E3DC]">
-              <p className="text-sm text-[#8B8680] font-serif italic">
-                Luce. Profumo. Artigianato.
-              </p>
+              <p className="text-sm text-[#8B8680] font-serif italic">{brandTagline}</p>
             </div>
           </div>
         </div>

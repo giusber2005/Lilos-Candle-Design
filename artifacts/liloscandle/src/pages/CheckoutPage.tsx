@@ -1,7 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLocation, Link } from "wouter";
 import { CreditCard, Package, ChevronRight } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 
 interface CartSummary {
   total: number;
@@ -26,12 +36,19 @@ const paymentMethods = [
   { id: "google_pay", label: "Google Pay", icon: "G" },
 ];
 
-export default function CheckoutPage() {
+const inputCls =
+  "w-full border border-[#E8E3DC] bg-white px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] transition-colors";
+
+function CheckoutInner() {
   const [, navigate] = useLocation();
   const { sessionId, refreshCount } = useCart();
   const [cart, setCart] = useState<CartSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+
+  const stripe = useStripe();
+  const elements = useElements();
 
   const [form, setForm] = useState({
     firstName: "",
@@ -65,28 +82,80 @@ export default function CheckoutPage() {
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
   };
 
+  const placeOrder = useCallback(async (stripePaymentIntentId?: string) => {
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId,
+        shippingAddress: form,
+        shippingMethod,
+        paymentMethod,
+        notes: notes || null,
+        stripePaymentIntentId: stripePaymentIntentId || null,
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "Order failed");
+    }
+    return res.json();
+  }, [sessionId, form, shippingMethod, paymentMethod, notes]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cart || cart.itemCount === 0) return;
     setSubmitting(true);
+    setStripeError(null);
     try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          shippingAddress: form,
-          shippingMethod,
-          paymentMethod,
-          notes: notes || null,
-        }),
-      });
-      if (!res.ok) throw new Error("Order failed");
-      const order = await res.json();
-      refreshCount();
-      navigate(`/order/${order.id}`);
-    } catch {
-      alert("Errore durante il checkout. Riprova.");
+      if (paymentMethod === "card" && stripe && elements && stripePublishableKey) {
+        // 1. Create payment intent
+        const piRes = await fetch("/api/stripe/create-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: total }),
+        });
+        if (!piRes.ok) throw new Error("Errore nella creazione del pagamento");
+        const { clientSecret, id: piId } = await piRes.json();
+
+        // 2. Confirm card payment with Stripe
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) throw new Error("Card element not found");
+
+        const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: `${form.firstName} ${form.lastName}`,
+              email: form.email,
+              phone: form.phone || undefined,
+              address: {
+                line1: form.address,
+                city: form.city,
+                postal_code: form.postalCode,
+                country: "IT",
+              },
+            },
+          },
+        });
+
+        if (error) {
+          setStripeError(error.message || "Pagamento fallito");
+          return;
+        }
+
+        // 3. Create order with stripe payment intent id
+        const order = await placeOrder(paymentIntent?.id || piId);
+        refreshCount();
+        navigate(`/order/${order.id}`);
+      } else {
+        // Non-card payment methods (no Stripe)
+        const order = await placeOrder();
+        refreshCount();
+        navigate(`/order/${order.id}`);
+      }
+    } catch (err: any) {
+      alert(err.message || "Errore durante il checkout. Riprova.");
     } finally {
       setSubmitting(false);
     }
@@ -113,9 +182,6 @@ export default function CheckoutPage() {
     );
   }
 
-  const inputCls =
-    "w-full border border-[#E8E3DC] bg-white px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] transition-colors";
-
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <div className="pt-24 pb-20 px-6">
@@ -133,69 +199,14 @@ export default function CheckoutPage() {
                     Indirizzo di spedizione
                   </h2>
                   <div className="grid grid-cols-2 gap-4">
-                    <input
-                      name="firstName"
-                      placeholder="Nome *"
-                      value={form.firstName}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                    />
-                    <input
-                      name="lastName"
-                      placeholder="Cognome *"
-                      value={form.lastName}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                    />
-                    <input
-                      name="email"
-                      type="email"
-                      placeholder="Email *"
-                      value={form.email}
-                      onChange={handleChange}
-                      required
-                      className={`${inputCls} col-span-2`}
-                    />
-                    <input
-                      name="phone"
-                      placeholder="Telefono"
-                      value={form.phone}
-                      onChange={handleChange}
-                      className={`${inputCls} col-span-2`}
-                    />
-                    <input
-                      name="address"
-                      placeholder="Indirizzo *"
-                      value={form.address}
-                      onChange={handleChange}
-                      required
-                      className={`${inputCls} col-span-2`}
-                    />
-                    <input
-                      name="city"
-                      placeholder="Città *"
-                      value={form.city}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                    />
-                    <input
-                      name="postalCode"
-                      placeholder="CAP *"
-                      value={form.postalCode}
-                      onChange={handleChange}
-                      required
-                      className={inputCls}
-                    />
-                    <select
-                      name="country"
-                      value={form.country}
-                      onChange={handleChange}
-                      required
-                      className={`${inputCls} col-span-2 appearance-none cursor-pointer`}
-                    >
+                    <input name="firstName" placeholder="Nome *" value={form.firstName} onChange={handleChange} required className={inputCls} />
+                    <input name="lastName" placeholder="Cognome *" value={form.lastName} onChange={handleChange} required className={inputCls} />
+                    <input name="email" type="email" placeholder="Email *" value={form.email} onChange={handleChange} required className={`${inputCls} col-span-2`} />
+                    <input name="phone" placeholder="Telefono" value={form.phone} onChange={handleChange} className={`${inputCls} col-span-2`} />
+                    <input name="address" placeholder="Indirizzo *" value={form.address} onChange={handleChange} required className={`${inputCls} col-span-2`} />
+                    <input name="city" placeholder="Città *" value={form.city} onChange={handleChange} required className={inputCls} />
+                    <input name="postalCode" placeholder="CAP *" value={form.postalCode} onChange={handleChange} required className={inputCls} />
+                    <select name="country" value={form.country} onChange={handleChange} required className={`${inputCls} col-span-2 appearance-none cursor-pointer`}>
                       <option>Italia</option>
                       <option>Francia</option>
                       <option>Germania</option>
@@ -214,20 +225,11 @@ export default function CheckoutPage() {
                       <label
                         key={method.id}
                         className={`flex items-center justify-between p-4 border cursor-pointer transition-all ${
-                          shippingMethod === method.id
-                            ? "border-[#2C2826] bg-white"
-                            : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
+                          shippingMethod === method.id ? "border-[#2C2826] bg-white" : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value={method.id}
-                            checked={shippingMethod === method.id}
-                            onChange={() => setShippingMethod(method.id)}
-                            className="accent-[#2C2826]"
-                          />
+                          <input type="radio" name="shipping" value={method.id} checked={shippingMethod === method.id} onChange={() => setShippingMethod(method.id)} className="accent-[#2C2826]" />
                           <div>
                             <p className="text-sm font-medium text-[#2C2826]">{method.label}</p>
                             <p className="text-xs text-[#8B8680]">{method.desc}</p>
@@ -239,9 +241,7 @@ export default function CheckoutPage() {
                       </label>
                     ))}
                     {subtotal < 50 && (
-                      <p className="text-xs text-[#7C6B8A] italic px-1">
-                        Spedizione gratuita per ordini superiori a € 50
-                      </p>
+                      <p className="text-xs text-[#7C6B8A] italic px-1">Spedizione gratuita per ordini superiori a € 50</p>
                     )}
                   </div>
                 </div>
@@ -257,27 +257,43 @@ export default function CheckoutPage() {
                       <label
                         key={pm.id}
                         className={`flex items-center gap-3 p-4 border cursor-pointer transition-all ${
-                          paymentMethod === pm.id
-                            ? "border-[#2C2826] bg-white"
-                            : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
+                          paymentMethod === pm.id ? "border-[#2C2826] bg-white" : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name="payment"
-                          value={pm.id}
-                          checked={paymentMethod === pm.id}
-                          onChange={() => setPaymentMethod(pm.id)}
-                          className="accent-[#2C2826]"
-                        />
+                        <input type="radio" name="payment" value={pm.id} checked={paymentMethod === pm.id} onChange={() => setPaymentMethod(pm.id)} className="accent-[#2C2826]" />
                         <span className="text-lg">{pm.icon}</span>
                         <span className="text-sm text-[#2C2826]">{pm.label}</span>
                       </label>
                     ))}
                   </div>
-                  <p className="text-xs text-[#8B8680] mt-3 italic">
-                    Il pagamento sicuro sarà elaborato tramite Stripe / PayPal.
-                  </p>
+
+                  {/* Stripe card element */}
+                  {paymentMethod === "card" && stripePublishableKey && (
+                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4">
+                      <p className="text-xs text-[#8B8680] mb-3 uppercase tracking-[0.15em]">Dati carta</p>
+                      <CardElement
+                        options={{
+                          style: {
+                            base: {
+                              fontSize: "14px",
+                              color: "#2C2826",
+                              fontFamily: "Inter, sans-serif",
+                              "::placeholder": { color: "#C5BEB8" },
+                            },
+                            invalid: { color: "#ef4444" },
+                          },
+                        }}
+                      />
+                    </div>
+                  )}
+                  {paymentMethod === "card" && !stripePublishableKey && (
+                    <p className="text-xs text-[#8B8680] mt-3 italic">
+                      Il pagamento con carta verrà gestito tramite Stripe. Configura VITE_STRIPE_PUBLISHABLE_KEY per abilitarlo.
+                    </p>
+                  )}
+                  {stripeError && (
+                    <p className="text-sm text-red-500 mt-3">{stripeError}</p>
+                  )}
                 </div>
 
                 {/* Notes */}
@@ -339,7 +355,7 @@ export default function CheckoutPage() {
                       </span>
                     ) : (
                       <>
-                        Conferma ordine
+                        {paymentMethod === "card" && stripePublishableKey ? "Paga ora" : "Conferma ordine"}
                         <ChevronRight size={14} />
                       </>
                     )}
@@ -352,4 +368,15 @@ export default function CheckoutPage() {
       </div>
     </div>
   );
+}
+
+export default function CheckoutPage() {
+  if (stripePromise) {
+    return (
+      <Elements stripe={stripePromise}>
+        <CheckoutInner />
+      </Elements>
+    );
+  }
+  return <CheckoutInner />;
 }

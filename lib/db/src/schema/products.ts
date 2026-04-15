@@ -1,27 +1,27 @@
-import { pgTable, text, serial, integer, numeric, boolean, timestamp } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const productsTable = pgTable("products", {
-  id: serial("id").primaryKey(),
+export const productsTable = sqliteTable("products", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
   description: text("description").notNull(),
   shortDescription: text("short_description").notNull(),
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  price: real("price").notNull(),
   imageUrl: text("image_url"),
-  images: text("images").array().notNull().default([]),
+  images: text("images").notNull().default("[]"), // JSON array string
   size: text("size").notNull(),
   material: text("material").notNull(),
   burnTime: text("burn_time").notNull(),
   weight: text("weight").notNull(),
   dimensions: text("dimensions").notNull(),
-  featured: boolean("featured").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  featured: integer("featured", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
-export const productVariantsTable = pgTable("product_variants", {
-  id: serial("id").primaryKey(),
+export const productVariantsTable = sqliteTable("product_variants", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   productId: integer("product_id").notNull().references(() => productsTable.id),
   color: text("color").notNull(),
   colorHex: text("color_hex").notNull(),
