@@ -1,0 +1,149 @@
+
+> @workspace/api-server@0.0.0 dev /home/runner/workspace/artifacts/api-server
+> NODE_ENV=development tsx ./src/index.ts
+
+Server listening on port 8080
+DrizzleQueryError: Failed query: select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1
+params: 30756fd7-0b5c-42da-b32a-bcf9bbb5bde5
+    at NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:73:11)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+    at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+  query: [32m'select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1'[39m,
+  params: [ [32m'30756fd7-0b5c-42da-b32a-bcf9bbb5bde5'[39m ],
+  cause: error: relation "carts" does not exist
+      at /home/runner/workspace/node_modules/[4m.pnpm[24m/pg-pool@3.13.0_pg@8.20.0/node_modules/[4mpg-pool[24m/index.js:45:11
+  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+      at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+      at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+    length: [33m104[39m,
+    severity: [32m'ERROR'[39m,
+    code: [32m'42P01'[39m,
+    detail: [90mundefined[39m,
+    hint: [90mundefined[39m,
+    position: [32m'60'[39m,
+    internalPosition: [90mundefined[39m,
+    internalQuery: [90mundefined[39m,
+    where: [90mundefined[39m,
+    schema: [90mundefined[39m,
+    table: [90mundefined[39m,
+    column: [90mundefined[39m,
+    dataType: [90mundefined[39m,
+    constraint: [90mundefined[39m,
+    file: [32m'parse_relation.c'[39m,
+    line: [32m'1452'[39m,
+    routine: [32m'parserOpenTable'[39m
+  }
+}
+DrizzleQueryError: Failed query: select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1
+params: 30756fd7-0b5c-42da-b32a-bcf9bbb5bde5
+    at NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:73:11)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+    at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+  query: [32m'select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1'[39m,
+  params: [ [32m'30756fd7-0b5c-42da-b32a-bcf9bbb5bde5'[39m ],
+  cause: error: relation "carts" does not exist
+      at /home/runner/workspace/node_modules/[4m.pnpm[24m/pg-pool@3.13.0_pg@8.20.0/node_modules/[4mpg-pool[24m/index.js:45:11
+  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+      at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+      at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+    length: [33m104[39m,
+    severity: [32m'ERROR'[39m,
+    code: [32m'42P01'[39m,
+    detail: [90mundefined[39m,
+    hint: [90mundefined[39m,
+    position: [32m'60'[39m,
+    internalPosition: [90mundefined[39m,
+    internalQuery: [90mundefined[39m,
+    where: [90mundefined[39m,
+    schema: [90mundefined[39m,
+    table: [90mundefined[39m,
+    column: [90mundefined[39m,
+    dataType: [90mundefined[39m,
+    constraint: [90mundefined[39m,
+    file: [32m'parse_relation.c'[39m,
+    line: [32m'1452'[39m,
+    routine: [32m'parserOpenTable'[39m
+  }
+}
+DrizzleQueryError: Failed query: select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1
+params: 30756fd7-0b5c-42da-b32a-bcf9bbb5bde5
+    at NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:73:11)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+    at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+  query: [32m'select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1'[39m,
+  params: [ [32m'30756fd7-0b5c-42da-b32a-bcf9bbb5bde5'[39m ],
+  cause: error: relation "carts" does not exist
+      at /home/runner/workspace/node_modules/[4m.pnpm[24m/pg-pool@3.13.0_pg@8.20.0/node_modules/[4mpg-pool[24m/index.js:45:11
+  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+      at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+      at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+    length: [33m104[39m,
+    severity: [32m'ERROR'[39m,
+    code: [32m'42P01'[39m,
+    detail: [90mundefined[39m,
+    hint: [90mundefined[39m,
+    position: [32m'60'[39m,
+    internalPosition: [90mundefined[39m,
+    internalQuery: [90mundefined[39m,
+    where: [90mundefined[39m,
+    schema: [90mundefined[39m,
+    table: [90mundefined[39m,
+    column: [90mundefined[39m,
+    dataType: [90mundefined[39m,
+    constraint: [90mundefined[39m,
+    file: [32m'parse_relation.c'[39m,
+    line: [32m'1452'[39m,
+    routine: [32m'parserOpenTable'[39m
+  }
+}
+DrizzleQueryError: Failed query: select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1
+params: 30756fd7-0b5c-42da-b32a-bcf9bbb5bde5
+    at NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:73:11)
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+    at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+    at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+  query: [32m'select "id", "session_id", "created_at", "updated_at" from "carts" where "carts"."session_id" = $1'[39m,
+  params: [ [32m'30756fd7-0b5c-42da-b32a-bcf9bbb5bde5'[39m ],
+  cause: error: relation "carts" does not exist
+      at /home/runner/workspace/node_modules/[4m.pnpm[24m/pg-pool@3.13.0_pg@8.20.0/node_modules/[4mpg-pool[24m/index.js:45:11
+  [90m    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:161:13)
+      at async NodePgPreparedQuery.queryWithCache (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/pg-core/session.ts:71:12)
+      at async <anonymous> (/home/runner/workspace/node_modules/[4m.pnpm[24m/drizzle-orm@0.45.1_@types+pg@8.18.0_pg@8.20.0/node_modules/[4msrc[24m/node-postgres/session.ts:154:19)
+      at async getOrCreateCart [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:14:16[90m)[39m
+      at async <anonymous> [90m(/home/runner/workspace/artifacts/api-server/[39msrc/routes/cart.ts:114:18[90m)[39m {
+    length: [33m104[39m,
+    severity: [32m'ERROR'[39m,
+    code: [32m'42P01'[39m,
+    detail: [90mundefined[39m,
+    hint: [90mundefined[39m,
+    position: [32m'60'[39m,
+    internalPosition: [90mundefined[39m,
+    internalQuery: [90mundefined[39m,
+    where: [90mundefined[39m,
+    schema: [90mundefined[39m,
+    table: [90mundefined[39m,
+    column: [90mundefined[39m,
+    dataType: [90mundefined[39m,
+    constraint: [90mundefined[39m,
+    file: [32m'parse_relation.c'[39m,
+    line: [32m'1452'[39m,
+    routine: [32m'parserOpenTable'[39m
+  }
+}
