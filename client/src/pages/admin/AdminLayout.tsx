@@ -6,6 +6,7 @@ import {
   Package,
   ShoppingBag,
   FileText,
+  Settings,
   LogOut,
 } from "lucide-react";
 
@@ -14,6 +15,7 @@ const navItems = [
   { href: "/admin/products", label: "Prodotti", icon: Package },
   { href: "/admin/orders", label: "Ordini", icon: ShoppingBag },
   { href: "/admin/content", label: "Contenuti", icon: FileText },
+  { href: "/admin/settings", label: "Impostazioni", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
