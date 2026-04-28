@@ -259,6 +259,71 @@ router.delete("/products/:id/variants/:vid", async (req, res) => {
   }
 });
 
+// ─── Change Password ──────────────────────────────────────────────────────────
+
+router.post("/change-password", async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: "currentPassword e newPassword sono obbligatori" });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: "La nuova password deve essere di almeno 8 caratteri" });
+  }
+
+  const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
+  if (currentPassword !== adminPassword) {
+    return res.status(401).json({ error: "Password attuale errata" });
+  }
+
+  const railwayToken = process.env.RAILWAY_API_TOKEN;
+  const serviceId = process.env.RAILWAY_SERVICE_ID;
+  const environmentId = process.env.RAILWAY_ENVIRONMENT_ID;
+
+  if (!railwayToken || !serviceId || !environmentId) {
+    return res.status(500).json({
+      error: "Variabili Railway non configurate (RAILWAY_API_TOKEN, RAILWAY_SERVICE_ID, RAILWAY_ENVIRONMENT_ID)",
+    });
+  }
+
+  try {
+    const response = await fetch("https://backboard.railway.app/graphql/v2", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${railwayToken}`,
+      },
+      body: JSON.stringify({
+        query: `
+          mutation VariableUpsert($input: VariableUpsertInput!) {
+            variableUpsert(input: $input)
+          }
+        `,
+        variables: {
+          input: {
+            serviceId,
+            environmentId,
+            name: "ADMIN_PASSWORD",
+            value: newPassword,
+          },
+        },
+      }),
+    });
+
+    const data = await response.json() as { errors?: { message: string }[] };
+    if (data.errors && data.errors.length > 0) {
+      console.error("Railway API error:", data.errors);
+      return res.status(500).json({ error: "Errore Railway API: " + data.errors[0].message });
+    }
+
+    // Apply immediately in-memory so the new password works without redeployment
+    process.env.ADMIN_PASSWORD = newPassword;
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Failed to update Railway variable:", err);
+    res.status(500).json({ error: "Impossibile aggiornare la variabile su Railway" });
+  }
+});
+
 // ─── Site Content ─────────────────────────────────────────────────────────────
 
 router.get("/content", async (_req, res) => {

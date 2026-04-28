@@ -21,6 +21,7 @@ import AdminDashboardPage from "@/pages/admin/DashboardPage";
 import AdminOrdersPage from "@/pages/admin/OrdersPage";
 import AdminProductsPage from "@/pages/admin/ProductsPage";
 import AdminContentPage from "@/pages/admin/ContentPage";
+import AdminSettingsPage from "@/pages/admin/SettingsPage";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,9 @@ function AdminRouter() {
       </Route>
       <Route path="/admin/content">
         <ProtectedAdmin component={AdminContentPage} />
+      </Route>
+      <Route path="/admin/settings">
+        <ProtectedAdmin component={AdminSettingsPage} />
       </Route>
       <Route component={NotFound} />
     </Switch>
