@@ -19,6 +19,7 @@ interface Product {
   description: string;
   shortDescription: string;
   price: number;
+  imageUrl: string | null;
   images: string[];
   size: string;
   material: string;
@@ -147,24 +148,40 @@ export default function ProductDetailPage() {
             {/* Images */}
             <div>
               <div
-                className="bg-[#F0EBE3] aspect-square flex items-center justify-center relative group cursor-zoom-in"
+                className="bg-[#F0EBE3] aspect-square flex items-center justify-center relative group cursor-zoom-in overflow-hidden"
                 onClick={() => setZoom(true)}
               >
-                <div className="transform group-hover:scale-105 transition-transform duration-700">
-                  <CandleSVG color={waxColor} large />
-                </div>
+                {product.imageUrl ? (
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="transform group-hover:scale-105 transition-transform duration-700">
+                    <CandleSVG color={waxColor} large />
+                  </div>
+                )}
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <ZoomIn size={18} className="text-[#8B8680]" />
                 </div>
               </div>
               {/* Thumbnails */}
-              <div className="flex gap-3 mt-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-20 h-20 bg-[#F0EBE3] flex items-center justify-center border border-[#E8E3DC] cursor-pointer hover:border-[#2C2826] transition-colors">
-                    <CandleSVG color={waxColor} />
+              {product.images.length > 0 ? (
+                <div className="flex gap-3 mt-4">
+                  {product.images.map((url, i) => (
+                    <div key={i} className="w-20 h-20 bg-[#F0EBE3] border border-[#E8E3DC] cursor-pointer hover:border-[#2C2826] transition-colors overflow-hidden">
+                      <img src={url} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              ) : product.imageUrl ? (
+                <div className="flex gap-3 mt-4">
+                  <div className="w-20 h-20 bg-[#F0EBE3] border border-[#2C2826] overflow-hidden">
+                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : null}
             </div>
 
             {/* Info */}

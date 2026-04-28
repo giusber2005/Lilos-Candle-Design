@@ -10,7 +10,18 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetch("/api/content")
       .then((r) => r.json())
-      .then(setContent)
+      .then((data: ContentMap) => {
+        setContent(data);
+        if (data.favicon_url) {
+          let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+          if (!link) {
+            link = document.createElement("link");
+            link.rel = "icon";
+            document.head.appendChild(link);
+          }
+          link.href = data.favicon_url;
+        }
+      })
       .catch(() => {});
   }, []);
 

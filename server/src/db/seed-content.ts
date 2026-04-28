@@ -120,6 +120,7 @@ const defaultContent = [
   { key: "brand_name", value: "LilosCandle", type: "text", label: "Nome del brand", section: "brand" },
   { key: "brand_tagline", value: "Luce. Profumo. Artigianato.", type: "text", label: "Tagline brand", section: "brand" },
   { key: "brand_description", value: "Candele artigianali in vaso di cemento, create con cura e passione.", type: "textarea", label: "Descrizione brand (footer)", section: "brand" },
+  { key: "favicon_url", value: "", type: "image", label: "Favicon del sito (URL icona .ico / .png)", section: "brand" },
 
   // ── Social ────────────────────────────────────────────────────────────────────
   { key: "instagram_url", value: "https://instagram.com/liloscandle", type: "link", label: "URL Instagram", section: "social" },

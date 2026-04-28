@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Star, ChevronDown } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
@@ -41,6 +41,18 @@ export default function HomePage() {
   const c = useContent();
   const processSteps = useJsonContent("process_steps", defaultProcessSteps);
   const reviews = useJsonContent("reviews", defaultReviews);
+
+  const [featuredProducts, setFeaturedProducts] = useState<{ id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/products")
+      .then((r) => r.json())
+      .then((all: { id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean }[]) => {
+        const featured = all.filter((p) => p.featured);
+        setFeaturedProducts((featured.length > 0 ? featured : all).slice(0, 2));
+      })
+      .catch(() => {});
+  }, []);
 
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -120,24 +132,28 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {[
-              { slug: "big-boy-candle", name: "Big Boy", desc: "La candela grande. Per ambienti e momenti speciali.", price: "€ 39,90", size: "large" as const },
-              { slug: "lil-one-candle", name: "Lil One", desc: "La candela piccola. Perfetta ovunque tu voglia luce.", price: "€ 6,50", size: "small" as const },
-            ].map((p, i) => (
+            {featuredProducts.map((p, i) => (
               <Link key={p.slug} href={`/products/${p.slug}`}>
                 <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
                   <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)]">
-                    <div className="transform group-hover:scale-105 transition-transform duration-700">
-                      <CandlePlaceholder size={p.size} />
-                    </div>
+                    {p.imageUrl ? (
+                      <img
+                        src={p.imageUrl}
+                        alt={p.name}
+                        className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                      />
+                    ) : (
+                      <div className="transform group-hover:scale-105 transition-transform duration-700">
+                        <CandlePlaceholder size={i === 0 ? "large" : "small"} />
+                      </div>
+                    )}
                   </div>
                   <div className="pt-6 pb-2 flex items-end justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.25em] text-[#8B8680] mb-1">Viola · Amarena</p>
                       <h3 className="font-serif text-2xl text-[#2C2826]">{p.name}</h3>
-                      <p className="text-sm text-[#8B8680] mt-1 font-light">{p.desc}</p>
+                      <p className="text-sm text-[#8B8680] mt-1 font-light">{p.shortDescription}</p>
                     </div>
-                    <span className="font-serif text-xl text-[#2C2826]">{p.price}</span>
+                    <span className="font-serif text-xl text-[#2C2826]">€ {p.price.toFixed(2).replace(".", ",")}</span>
                   </div>
                 </div>
               </Link>

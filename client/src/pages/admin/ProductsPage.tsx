@@ -158,7 +158,12 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-4">
                   {p.imageUrl && (
-                    <img src={p.imageUrl} alt={p.name} className="w-12 h-12 object-cover border border-[#E8E3DC]" />
+                    <img
+                      src={p.imageUrl}
+                      alt={p.name}
+                      className="w-12 h-12 object-cover border border-[#E8E3DC]"
+                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                    />
                   )}
                   <div>
                     <p className="font-medium text-[#2C2826]">{p.name}</p>
@@ -348,6 +353,14 @@ export default function ProductsPage() {
               <div>
                 <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Immagine principale (URL)</label>
                 <input value={form.imageUrl} onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))} className={inputCls} placeholder="https://..." />
+                {form.imageUrl && (
+                  <img
+                    src={form.imageUrl as string}
+                    alt="Anteprima"
+                    className="mt-2 h-24 object-cover border border-[#E8E3DC]"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
+                  />
+                )}
               </div>
               <div>
                 <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Galleria immagini (URL separati da virgola)</label>

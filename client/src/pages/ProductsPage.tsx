@@ -16,6 +16,7 @@ interface Product {
   slug: string;
   shortDescription: string;
   price: number;
+  imageUrl: string | null;
   variants: Variant[];
 }
 
@@ -101,9 +102,17 @@ export default function ProductsPage() {
                   <Link key={product.id} href={`/products/${product.slug}`}>
                     <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
                       <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)]">
-                        <div className="transform group-hover:scale-105 transition-transform duration-700">
-                          <CandleSVG color={waxColor} />
-                        </div>
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="transform group-hover:scale-105 transition-transform duration-700">
+                            <CandleSVG color={waxColor} />
+                          </div>
+                        )}
                       </div>
                       <div className="pt-6 flex items-start justify-between">
                         <div>
