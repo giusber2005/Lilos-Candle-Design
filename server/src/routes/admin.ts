@@ -75,7 +75,7 @@ router.get("/dashboard", async (_req, res) => {
       orders: ordersCount.count,
       products: productsCount.count,
       subscribers: subscribersCount.count,
-      revenue: revenueResult.total ?? 0,
+      revenue: parseFloat(String(revenueResult.total ?? 0)),
       recentOrders: recentOrders.map((o) => ({
         id: o.id,
         orderNumber: o.orderNumber,
