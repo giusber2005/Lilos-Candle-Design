@@ -18,9 +18,9 @@ router.post("/create-payment-intent", async (req, res) => {
       return res.status(400).json({ error: "Invalid amount" });
     }
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // convert to cents
+      amount: Math.round(amount * 100),
       currency,
-      automatic_payment_methods: { enabled: true },
+      payment_method_types: ["card"],
     });
     res.json({ clientSecret: paymentIntent.client_secret, id: paymentIntent.id });
   } catch (err: any) {

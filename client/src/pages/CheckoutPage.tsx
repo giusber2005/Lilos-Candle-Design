@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useLocation, Link } from "wouter";
-import { CreditCard, Package, ChevronRight } from "lucide-react";
+import { CreditCard, Package, ChevronRight, Building2, Truck } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -30,10 +30,9 @@ const shippingMethods = [
 ];
 
 const paymentMethods = [
-  { id: "card", label: "Carta di credito", icon: "💳" },
-  { id: "paypal", label: "PayPal", icon: "🅿️" },
-  { id: "apple_pay", label: "Apple Pay", icon: "🍎" },
-  { id: "google_pay", label: "Google Pay", icon: "G" },
+  { id: "card", label: "Carta di credito / debito", icon: <CreditCard size={16} /> },
+  { id: "bank_transfer", label: "Bonifico bancario", icon: <Building2 size={16} /> },
+  { id: "cash_on_delivery", label: "Contrassegno", icon: <Truck size={16} /> },
 ];
 
 const inputCls =
@@ -45,7 +44,7 @@ function CheckoutInner() {
   const [cart, setCart] = useState<CartSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [cardError, setCardError] = useState<string | null>(null);
 
   const stripe = useStripe();
   const elements = useElements();
@@ -97,7 +96,7 @@ function CheckoutInner() {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || "Order failed");
+      throw new Error(err.error || "Ordine fallito");
     }
     return res.json();
   }, [sessionId, form, shippingMethod, paymentMethod, notes]);
@@ -106,22 +105,33 @@ function CheckoutInner() {
     e.preventDefault();
     if (!cart || cart.itemCount === 0) return;
     setSubmitting(true);
-    setStripeError(null);
+    setCardError(null);
+
     try {
-      if (paymentMethod === "card" && stripe && elements && stripePublishableKey) {
-        // 1. Create payment intent
+      if (paymentMethod === "card") {
+        if (!stripe || !elements) {
+          throw new Error("Stripe non è ancora pronto. Riprova tra un momento.");
+        }
+        if (!stripePublishableKey) {
+          throw new Error("Il pagamento con carta non è configurato.");
+        }
+
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) throw new Error("Errore nel caricamento del form carta.");
+
+        // 1. Create payment intent on server
         const piRes = await fetch("/api/stripe/create-payment-intent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ amount: total }),
         });
-        if (!piRes.ok) throw new Error("Errore nella creazione del pagamento");
+        if (!piRes.ok) {
+          const err = await piRes.json().catch(() => ({}));
+          throw new Error(err.error || "Errore nella creazione del pagamento.");
+        }
         const { clientSecret, id: piId } = await piRes.json();
 
-        // 2. Confirm card payment with Stripe
-        const cardElement = elements.getElement(CardElement);
-        if (!cardElement) throw new Error("Card element not found");
-
+        // 2. Confirm card payment with Stripe (handles 3DS automatically)
         const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
           payment_method: {
             card: cardElement,
@@ -140,16 +150,25 @@ function CheckoutInner() {
         });
 
         if (error) {
-          setStripeError(error.message || "Pagamento fallito");
+          setCardError(
+            error.code === "card_declined"
+              ? "Carta rifiutata. Verifica i dati o usa una carta diversa."
+              : error.message || "Pagamento fallito."
+          );
           return;
         }
 
-        // 3. Create order with stripe payment intent id
-        const order = await placeOrder(paymentIntent?.id || piId);
+        if (paymentIntent?.status !== "succeeded") {
+          setCardError("Il pagamento non è stato completato. Riprova.");
+          return;
+        }
+
+        // 3. Create order (server verifies payment intent status)
+        const order = await placeOrder(paymentIntent.id || piId);
         refreshCount();
         navigate(`/order/${order.id}`);
       } else {
-        // Non-card payment methods (no Stripe)
+        // Bank transfer or cash on delivery — no online payment processing
         const order = await placeOrder();
         refreshCount();
         navigate(`/order/${order.id}`);
@@ -252,7 +271,7 @@ function CheckoutInner() {
                     <CreditCard size={14} />
                     Metodo di pagamento
                   </h2>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     {paymentMethods.map((pm) => (
                       <label
                         key={pm.id}
@@ -260,39 +279,64 @@ function CheckoutInner() {
                           paymentMethod === pm.id ? "border-[#2C2826] bg-white" : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
                         }`}
                       >
-                        <input type="radio" name="payment" value={pm.id} checked={paymentMethod === pm.id} onChange={() => setPaymentMethod(pm.id)} className="accent-[#2C2826]" />
-                        <span className="text-lg">{pm.icon}</span>
+                        <input type="radio" name="payment" value={pm.id} checked={paymentMethod === pm.id} onChange={() => { setPaymentMethod(pm.id); setCardError(null); }} className="accent-[#2C2826]" />
+                        <span className="text-[#8B8680]">{pm.icon}</span>
                         <span className="text-sm text-[#2C2826]">{pm.label}</span>
                       </label>
                     ))}
                   </div>
 
-                  {/* Stripe card element */}
-                  {paymentMethod === "card" && stripePublishableKey && (
+                  {/* Card details */}
+                  {paymentMethod === "card" && (
                     <div className="mt-4 border border-[#E8E3DC] bg-white p-4">
-                      <p className="text-xs text-[#8B8680] mb-3 uppercase tracking-[0.15em]">Dati carta</p>
-                      <CardElement
-                        options={{
-                          style: {
-                            base: {
-                              fontSize: "14px",
-                              color: "#2C2826",
-                              fontFamily: "Inter, sans-serif",
-                              "::placeholder": { color: "#C5BEB8" },
-                            },
-                            invalid: { color: "#ef4444" },
-                          },
-                        }}
-                      />
+                      {stripePublishableKey ? (
+                        <>
+                          <p className="text-xs text-[#8B8680] mb-3 uppercase tracking-[0.15em]">Dati carta</p>
+                          <CardElement
+                            options={{
+                              style: {
+                                base: {
+                                  fontSize: "14px",
+                                  color: "#2C2826",
+                                  fontFamily: "Inter, sans-serif",
+                                  "::placeholder": { color: "#C5BEB8" },
+                                },
+                                invalid: { color: "#ef4444" },
+                              },
+                            }}
+                          />
+                          <p className="text-xs text-[#C5BEB8] mt-3">Pagamento sicuro tramite Stripe. I dati della carta non vengono mai salvati sui nostri server.</p>
+                        </>
+                      ) : (
+                        <p className="text-xs text-[#8B8680] italic">
+                          Il pagamento con carta non è ancora attivo. Scegli bonifico o contrassegno.
+                        </p>
+                      )}
                     </div>
                   )}
-                  {paymentMethod === "card" && !stripePublishableKey && (
-                    <p className="text-xs text-[#8B8680] mt-3 italic">
-                      Il pagamento con carta verrà gestito tramite Stripe. Configura VITE_STRIPE_PUBLISHABLE_KEY per abilitarlo.
-                    </p>
+
+                  {/* Bank transfer instructions */}
+                  {paymentMethod === "bank_transfer" && (
+                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 space-y-2">
+                      <p className="text-xs text-[#8B8680] uppercase tracking-[0.15em] mb-3">Istruzioni bonifico</p>
+                      <p className="text-sm text-[#2C2826]">Dopo la conferma dell'ordine riceverai via email le coordinate bancarie per il pagamento.</p>
+                      <p className="text-xs text-[#8B8680]">L'ordine verrà spedito entro 2 giorni lavorativi dalla ricezione del bonifico.</p>
+                    </div>
                   )}
-                  {stripeError && (
-                    <p className="text-sm text-red-500 mt-3">{stripeError}</p>
+
+                  {/* Cash on delivery note */}
+                  {paymentMethod === "cash_on_delivery" && (
+                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 space-y-2">
+                      <p className="text-xs text-[#8B8680] uppercase tracking-[0.15em] mb-3">Pagamento alla consegna</p>
+                      <p className="text-sm text-[#2C2826]">Paghi direttamente al corriere al momento della consegna. È richiesto il pagamento in contanti.</p>
+                      <p className="text-xs text-[#8B8680]">Può essere applicato un supplemento contrassegno di € 3,00.</p>
+                    </div>
+                  )}
+
+                  {cardError && (
+                    <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
+                      {cardError}
+                    </div>
                   )}
                 </div>
 
@@ -345,8 +389,8 @@ function CheckoutInner() {
 
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="w-full bg-[#2C2826] text-white py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors flex items-center justify-center gap-3 disabled:opacity-50"
+                    disabled={submitting || (paymentMethod === "card" && !stripePublishableKey)}
+                    className="w-full bg-[#2C2826] text-white py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? (
                       <span className="flex items-center gap-2">
@@ -355,7 +399,7 @@ function CheckoutInner() {
                       </span>
                     ) : (
                       <>
-                        {paymentMethod === "card" && stripePublishableKey ? "Paga ora" : "Conferma ordine"}
+                        {paymentMethod === "card" ? "Paga ora" : "Conferma ordine"}
                         <ChevronRight size={14} />
                       </>
                     )}
