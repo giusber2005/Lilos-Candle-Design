@@ -276,12 +276,13 @@ router.post("/change-password", async (req, res) => {
   }
 
   const railwayToken = process.env.RAILWAY_API_TOKEN;
+  const projectId = process.env.RAILWAY_PROJECT_ID;
   const serviceId = process.env.RAILWAY_SERVICE_ID;
   const environmentId = process.env.RAILWAY_ENVIRONMENT_ID;
 
-  if (!railwayToken || !serviceId || !environmentId) {
+  if (!railwayToken || !projectId || !serviceId || !environmentId) {
     return res.status(500).json({
-      error: "Variabili Railway non configurate (RAILWAY_API_TOKEN, RAILWAY_SERVICE_ID, RAILWAY_ENVIRONMENT_ID)",
+      error: "Variabili Railway non configurate (RAILWAY_API_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_SERVICE_ID, RAILWAY_ENVIRONMENT_ID)",
     });
   }
 
@@ -300,6 +301,7 @@ router.post("/change-password", async (req, res) => {
         `,
         variables: {
           input: {
+            projectId,
             serviceId,
             environmentId,
             name: "ADMIN_PASSWORD",

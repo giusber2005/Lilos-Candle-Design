@@ -75,6 +75,7 @@ export default function CartPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: qty }),
       });
+      if (!r.ok) return;
       const data = await r.json();
       setCart(data);
       refreshCount();
@@ -84,6 +85,7 @@ export default function CartPage() {
   const removeItem = async (itemId: number) => {
     try {
       const r = await fetch(`/api/cart/item/${itemId}`, { method: "DELETE" });
+      if (!r.ok) return;
       const data = await r.json();
       setCart(data);
       refreshCount();

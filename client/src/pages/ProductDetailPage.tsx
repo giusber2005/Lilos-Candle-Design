@@ -87,7 +87,7 @@ export default function ProductDetailPage() {
     if (!product || !selectedVariant) return;
     setAdding(true);
     try {
-      await fetch("/api/cart", {
+      const r = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,6 +97,7 @@ export default function ProductDetailPage() {
           quantity,
         }),
       });
+      if (!r.ok) throw new Error("Errore nell'aggiunta al carrello.");
       setAdded(true);
       refreshCount();
       setTimeout(() => setAdded(false), 2500);

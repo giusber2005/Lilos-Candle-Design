@@ -35,7 +35,7 @@ async function buildCartResponse(cart: any) {
     .from(cartItemsTable)
     .where(eq(cartItemsTable.cartId, cart.id));
 
-  const enrichedItems = await Promise.all(
+  const enrichedOrNull = await Promise.all(
     items.map(async (item) => {
       const [product] = await db
         .select()
@@ -45,6 +45,8 @@ async function buildCartResponse(cart: any) {
         .select()
         .from(productVariantsTable)
         .where(eq(productVariantsTable.id, item.variantId));
+
+      if (!product || !variant) return null;
 
       const variants = await db
         .select()
@@ -94,6 +96,8 @@ async function buildCartResponse(cart: any) {
       };
     })
   );
+
+  const enrichedItems = enrichedOrNull.filter((i) => i !== null);
 
   const total = enrichedItems.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
