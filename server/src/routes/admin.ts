@@ -7,6 +7,7 @@ import {
   orderItemsTable,
   newsletterSubscribersTable,
   siteContentTable,
+  adminSettingsTable,
 } from "../db/schema/index.js";
 import { eq, desc, count, sum } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -34,11 +35,25 @@ function formatDate(d: Date | number | null | undefined): string {
 
 router.post("/login", async (req, res) => {
   const { password } = req.body;
-  const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
-  if (password !== adminPassword) {
-    return res.status(401).json({ error: "Password errata" });
+  try {
+    const [stored] = await db
+      .select()
+      .from(adminSettingsTable)
+      .where(eq(adminSettingsTable.key, "admin_password_hash"));
+
+    let isValid = false;
+    if (stored) {
+      isValid = await bcrypt.compare(password, stored.value);
+    } else {
+      isValid = password === (process.env.ADMIN_PASSWORD || "changeme123");
+    }
+
+    if (!isValid) return res.status(401).json({ error: "Password errata" });
+    res.json({ token: signAdminToken() });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
-  res.json({ token: signAdminToken() });
 });
 
 router.use(requireAdmin);
@@ -270,59 +285,36 @@ router.post("/change-password", async (req, res) => {
     return res.status(400).json({ error: "La nuova password deve essere di almeno 8 caratteri" });
   }
 
-  const adminPassword = process.env.ADMIN_PASSWORD || "changeme123";
-  if (currentPassword !== adminPassword) {
-    return res.status(401).json({ error: "Password attuale errata" });
-  }
-
-  const railwayToken = process.env.RAILWAY_API_TOKEN;
-  const projectId = process.env.RAILWAY_PROJECT_ID;
-  const serviceId = process.env.RAILWAY_SERVICE_ID;
-  const environmentId = process.env.RAILWAY_ENVIRONMENT_ID;
-
-  if (!railwayToken || !projectId || !serviceId || !environmentId) {
-    return res.status(500).json({
-      error: "Variabili Railway non configurate (RAILWAY_API_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_SERVICE_ID, RAILWAY_ENVIRONMENT_ID)",
-    });
-  }
-
   try {
-    const response = await fetch("https://backboard.railway.app/graphql/v2", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${railwayToken}`,
-      },
-      body: JSON.stringify({
-        query: `
-          mutation VariableUpsert($input: VariableUpsertInput!) {
-            variableUpsert(input: $input)
-          }
-        `,
-        variables: {
-          input: {
-            projectId,
-            serviceId,
-            environmentId,
-            name: "ADMIN_PASSWORD",
-            value: newPassword,
-          },
-        },
-      }),
-    });
+    const [stored] = await db
+      .select()
+      .from(adminSettingsTable)
+      .where(eq(adminSettingsTable.key, "admin_password_hash"));
 
-    const data = await response.json() as { errors?: { message: string }[] };
-    if (data.errors && data.errors.length > 0) {
-      console.error("Railway API error:", data.errors);
-      return res.status(500).json({ error: "Errore Railway API: " + data.errors[0].message });
+    let isValid = false;
+    if (stored) {
+      isValid = await bcrypt.compare(currentPassword, stored.value);
+    } else {
+      isValid = currentPassword === (process.env.ADMIN_PASSWORD || "changeme123");
     }
 
-    // Apply immediately in-memory so the new password works without redeployment
-    process.env.ADMIN_PASSWORD = newPassword;
+    if (!isValid) return res.status(401).json({ error: "Password attuale errata" });
+
+    const hash = await bcrypt.hash(newPassword, 12);
+
+    if (stored) {
+      await db
+        .update(adminSettingsTable)
+        .set({ value: hash, updatedAt: new Date() })
+        .where(eq(adminSettingsTable.key, "admin_password_hash"));
+    } else {
+      await db.insert(adminSettingsTable).values({ key: "admin_password_hash", value: hash });
+    }
+
     res.json({ ok: true });
   } catch (err) {
-    console.error("Failed to update Railway variable:", err);
-    res.status(500).json({ error: "Impossibile aggiornare la variabile su Railway" });
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 

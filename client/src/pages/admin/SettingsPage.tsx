@@ -154,7 +154,7 @@ export default function SettingsPage() {
         </div>
 
         <p className="text-xs text-[#C5BEB8] mt-4">
-          La password viene salvata nelle variabili d'ambiente di Railway e applicata immediatamente.
+          La password viene salvata nel database e applicata immediatamente.
           Dopo il cambio verrai disconnesso automaticamente.
         </p>
       </div>

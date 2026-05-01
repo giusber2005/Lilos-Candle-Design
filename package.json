@@ -8,6 +8,7 @@
     "build": "vite build --config client/vite.config.ts",
     "start": "NODE_ENV=production tsx server/src/index.ts",
     "db:push": "drizzle-kit push",
+    "db:generate": "drizzle-kit generate",
     "db:seed": "tsx server/src/db/seed-content.ts"
   },
   "dependencies": {

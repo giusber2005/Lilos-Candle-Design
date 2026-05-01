@@ -10,4 +10,12 @@ export const siteContentTable = sqliteTable("site_content", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
 });
 
+export const adminSettingsTable = sqliteTable("admin_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),
+});
+
 export type SiteContent = typeof siteContentTable.$inferSelect;
+export type AdminSetting = typeof adminSettingsTable.$inferSelect;
