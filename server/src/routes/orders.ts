@@ -171,7 +171,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Cart is empty" });
     }
 
-    const enrichedItems = await Promise.all(
+    const enrichedOrNull = await Promise.all(
       cartItems.map(async (item) => {
         const [product] = await db
           .select()
@@ -181,9 +181,16 @@ router.post("/", async (req, res) => {
           .select()
           .from(productVariantsTable)
           .where(eq(productVariantsTable.id, item.variantId));
+        if (!product || !variant) return null;
         return { item, product, variant };
       })
     );
+
+    const enrichedItems = enrichedOrNull.filter((x): x is NonNullable<typeof x> => x !== null);
+
+    if (enrichedItems.length === 0) {
+      return res.status(400).json({ error: "Cart is empty" });
+    }
 
     const subtotal = enrichedItems.reduce(
       (sum, { item, product }) => sum + product.price * item.quantity,

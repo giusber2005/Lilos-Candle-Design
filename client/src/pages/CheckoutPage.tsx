@@ -371,12 +371,9 @@ function CheckoutInner() {
 }
 
 export default function CheckoutPage() {
-  if (stripePromise) {
-    return (
-      <Elements stripe={stripePromise}>
-        <CheckoutInner />
-      </Elements>
-    );
-  }
-  return <CheckoutInner />;
+  return (
+    <Elements stripe={stripePromise}>
+      <CheckoutInner />
+    </Elements>
+  );
 }
