@@ -12,18 +12,10 @@ const defaultSteps = [
   { number: "05", title: "La rifinitura", subtitle: "Il dettaglio", body: "Ogni candela viene ispezionata singolarmente. La superficie della cera viene livellata se necessario, lo stoppino viene tagliato alla lunghezza corretta. Solo le candele che superano il controllo qualità escono dal laboratorio.", detail: "Controllo qualità · Rifinitura manuale · Pronta per te" },
 ];
 
-const defaultTips = [
-  { tip: "Prima accensione", desc: "Lascia bruciare la candela almeno 2 ore alla prima accensione per permettere alla cera di formare uno strato uniforme." },
-  { tip: "Lunghezza dello stoppino", desc: "Prima di ogni accensione, taglia lo stoppino a circa 5mm per garantire una combustione pulita e uniforme." },
-  { tip: "Superficie del cemento", desc: "Il vaso in cemento è poroso. Evita di appoggiarlo su superfici delicate senza un sottovaso." },
-  { tip: "Durata", desc: "Non lasciare la candela accesa per più di 4 ore consecutive. Spegnila e lasciala raffreddare prima di riaccenderla." },
-];
-
 export default function HowMadePage() {
   useScrollReveal();
   const c = useContent();
   const steps = useJsonContent("howmade_steps", defaultSteps);
-  const tips = useJsonContent("howmade_tips", defaultTips);
 
   useEffect(() => {
     document.title = `Come sono fatte – ${c["brand_name"] || "LilosCandle"}`;
@@ -90,28 +82,6 @@ export default function HowMadePage() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Care tips */}
-      <section className="py-24 px-6 bg-[#2C2826]">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16 reveal">
-            <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">
-              {c["howmade_tips_eyebrow"] || "Consigli d'uso"}
-            </p>
-            <h2 className="font-serif text-4xl text-white">
-              {c["howmade_tips_title"] || "Prendi cura della tua candela."}
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {tips.map((t, i) => (
-              <div key={t.tip} className={`reveal reveal-delay-${(i % 2) + 1} border border-[#3C3835] p-6`}>
-                <h3 className="font-serif text-lg text-white mb-3">{t.tip}</h3>
-                <p className="text-[#8B8680] font-light leading-relaxed text-sm">{t.desc}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

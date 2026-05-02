@@ -64,6 +64,7 @@ export default function ProductDetailPage() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [zoom, setZoom] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const { sessionId, refreshCount } = useCart();
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function ProductDetailPage() {
           setNotFound(true);
         } else {
           setProduct(p);
+          setSelectedImage(p.imageUrl);
           if (p.variants.length > 0) setSelectedVariant(p.variants[0]);
           document.title = `${p.name} – LilosCandle`;
         }
@@ -152,9 +154,9 @@ export default function ProductDetailPage() {
                 className="bg-[#F0EBE3] aspect-square flex items-center justify-center relative group cursor-zoom-in overflow-hidden"
                 onClick={() => setZoom(true)}
               >
-                {product.imageUrl ? (
+                {selectedImage ? (
                   <img
-                    src={product.imageUrl}
+                    src={selectedImage}
                     alt={product.name}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                   />
@@ -168,21 +170,25 @@ export default function ProductDetailPage() {
                 </div>
               </div>
               {/* Thumbnails */}
-              {product.images.length > 0 ? (
-                <div className="flex gap-3 mt-4">
-                  {product.images.map((url, i) => (
-                    <div key={i} className="w-20 h-20 bg-[#F0EBE3] border border-[#E8E3DC] cursor-pointer hover:border-[#2C2826] transition-colors overflow-hidden">
-                      <img src={url} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
-                    </div>
-                  ))}
-                </div>
-              ) : product.imageUrl ? (
-                <div className="flex gap-3 mt-4">
-                  <div className="w-20 h-20 bg-[#F0EBE3] border border-[#2C2826] overflow-hidden">
-                    <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+              {(() => {
+                const all = [product.imageUrl, ...product.images].filter(Boolean) as string[];
+                if (all.length === 0) return null;
+                return (
+                  <div className="flex gap-3 mt-4 flex-wrap">
+                    {all.map((url, i) => (
+                      <div
+                        key={i}
+                        onClick={() => setSelectedImage(url)}
+                        className={`w-20 h-20 bg-[#F0EBE3] border cursor-pointer overflow-hidden transition-colors ${
+                          selectedImage === url ? "border-[#2C2826]" : "border-[#E8E3DC] hover:border-[#8B8680]"
+                        }`}
+                      >
+                        <img src={url} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ) : null}
+                );
+              })()}
             </div>
 
             {/* Info */}
@@ -298,10 +304,18 @@ export default function ProductDetailPage() {
       {/* Zoom overlay */}
       {zoom && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center cursor-zoom-out"
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center cursor-zoom-out p-8"
           onClick={() => setZoom(false)}
         >
-          <CandleSVG color={waxColor} large />
+          {selectedImage ? (
+            <img
+              src={selectedImage}
+              alt={product.name}
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+            />
+          ) : (
+            <CandleSVG color={waxColor} large />
+          )}
         </div>
       )}
     </div>
