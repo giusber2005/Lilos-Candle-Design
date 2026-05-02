@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
-import { adminFetch } from "@/lib/admin-auth";
+import { adminFetch, useAdminAuth } from "@/lib/admin-auth";
 import { Upload, RefreshCw, GitBranch, Globe, FileText } from "lucide-react";
 
 export default function DeployPage() {
+  const { token } = useAdminAuth();
   const [status, setStatus] = useState<{ status: string; branch: string; remote: string } | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [message, setMessage] = useState("");
@@ -14,7 +15,7 @@ export default function DeployPage() {
   const fetchStatus = async () => {
     setLoadingStatus(true);
     try {
-      const r = await adminFetch("/api/admin/git-status");
+      const r = await adminFetch("/api/admin/git-status", token);
       if (!r.ok) throw new Error("Errore nel recupero dello stato");
       setStatus(await r.json());
     } catch (e: any) {
@@ -35,9 +36,8 @@ export default function DeployPage() {
     }
     setDeploying(true);
     try {
-      const r = await adminFetch("/api/admin/deploy", {
+      const r = await adminFetch("/api/admin/deploy", token, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: message.trim() }),
       });
       const data = await r.json();
