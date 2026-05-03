@@ -10,7 +10,8 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:seed": "tsx server/src/db/seed-content.ts",
-    "db:seed-products": "tsx server/src/db/seed-products.ts"
+    "db:seed-products": "tsx server/src/db/seed-products.ts",
+    "git-dashboard": "node scripts/git-dashboard.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

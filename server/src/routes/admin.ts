@@ -5,11 +5,12 @@ import {
   productVariantsTable,
   ordersTable,
   orderItemsTable,
+  cartItemsTable,
   newsletterSubscribersTable,
   siteContentTable,
   adminSettingsTable,
 } from "../db/schema/index.js";
-import { eq, desc, count, sum } from "drizzle-orm";
+import { eq, desc, count, sum, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { requireAdmin, signAdminToken } from "../middleware/auth";
 
@@ -216,6 +217,19 @@ router.patch("/products/:id", async (req, res) => {
 router.delete("/products/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
+
+    const variants = await db
+      .select({ id: productVariantsTable.id })
+      .from(productVariantsTable)
+      .where(eq(productVariantsTable.productId, id));
+
+    if (variants.length > 0) {
+      const vids = variants.map((v) => v.id);
+      await db.delete(cartItemsTable).where(inArray(cartItemsTable.variantId, vids));
+      await db.delete(orderItemsTable).where(inArray(orderItemsTable.variantId, vids));
+    }
+
     await db.delete(productVariantsTable).where(eq(productVariantsTable.productId, id));
     await db.delete(productsTable).where(eq(productsTable.id, id));
     res.json({ ok: true });

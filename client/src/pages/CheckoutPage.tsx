@@ -150,11 +150,8 @@ function CheckoutInner() {
         });
 
         if (error) {
-          setCardError(
-            error.code === "card_declined"
-              ? "Carta rifiutata. Verifica i dati o usa una carta diversa."
-              : error.message || "Pagamento fallito."
-          );
+          console.error("Stripe error:", error);
+          setCardError(error.message || "Pagamento fallito.");
           return;
         }
 
