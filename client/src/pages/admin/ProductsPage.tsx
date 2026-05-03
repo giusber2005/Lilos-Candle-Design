@@ -49,6 +49,9 @@ export default function ProductsPage() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [form, setForm] = useState({ ...emptyProduct });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [variantForms, setVariantForms] = useState<Record<number, typeof emptyVariant | null>>({});
 
   const load = () => {
@@ -105,9 +108,21 @@ export default function ProductsPage() {
   };
 
   const deleteProduct = async (id: number) => {
-    if (!confirm("Eliminare il prodotto e tutte le sue varianti?")) return;
-    await adminFetch(`/api/admin/products/${id}`, token, { method: "DELETE" });
-    load();
+    setDeleting(id);
+    setDeleteError(null);
+    try {
+      const r = await adminFetch(`/api/admin/products/${id}`, token, { method: "DELETE" });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        throw new Error(data.error || `Errore ${r.status}`);
+      }
+      setConfirmDelete(null);
+      load();
+    } catch (e: any) {
+      setDeleteError(e.message || "Errore durante l'eliminazione");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   const saveVariant = async (productId: number, variantId?: number) => {
@@ -137,7 +152,7 @@ export default function ProductsPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="font-serif text-3xl text-[#2C2826]">Prodotti</h1>
         <button
           onClick={openNew}
@@ -146,6 +161,12 @@ export default function ProductsPage() {
           <Plus size={16} /> Nuovo prodotto
         </button>
       </div>
+
+      {deleteError && (
+        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded">
+          {deleteError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -177,9 +198,31 @@ export default function ProductsPage() {
                   <button onClick={() => openEdit(p)} className="text-[#8B8680] hover:text-[#2C2826] p-2">
                     <Pencil size={16} />
                   </button>
-                  <button onClick={() => deleteProduct(p.id)} className="text-red-400 hover:text-red-600 p-2">
-                    <Trash2 size={16} />
-                  </button>
+                  {confirmDelete === p.id ? (
+                    <div className="flex items-center gap-1 bg-red-50 border border-red-200 px-2 py-1 rounded">
+                      <span className="text-xs text-red-600 mr-1">Sicuro?</span>
+                      <button
+                        onClick={() => deleteProduct(p.id)}
+                        disabled={deleting === p.id}
+                        className="text-xs bg-red-500 text-white px-2 py-0.5 rounded hover:bg-red-600 disabled:opacity-50"
+                      >
+                        {deleting === p.id ? "..." : "Sì, elimina"}
+                      </button>
+                      <button
+                        onClick={() => { setConfirmDelete(null); setDeleteError(null); }}
+                        className="text-xs text-[#8B8680] px-2 py-0.5 hover:text-[#2C2826]"
+                      >
+                        Annulla
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setConfirmDelete(p.id); setDeleteError(null); }}
+                      className="text-red-400 hover:text-red-600 p-2"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={() => setExpanded((e) => ({ ...e, [p.id]: !e[p.id] }))}
                     className="text-[#8B8680] hover:text-[#2C2826] p-2"

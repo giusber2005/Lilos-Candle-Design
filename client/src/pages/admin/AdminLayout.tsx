@@ -8,6 +8,7 @@ import {
   FileText,
   Settings,
   LogOut,
+  Upload,
 } from "lucide-react";
 
 const navItems = [
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/admin/orders", label: "Ordini", icon: ShoppingBag },
   { href: "/admin/content", label: "Contenuti", icon: FileText },
   { href: "/admin/settings", label: "Impostazioni", icon: Settings },
+  { href: "/admin/deploy", label: "Pubblica", icon: Upload },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

@@ -1,4 +1,7 @@
 import { Router, type IRouter } from "express";
+import { execFile } from "child_process";
+import { promisify } from "util";
+const execFileAsync = promisify(execFile);
 import { db } from "../db/index.js";
 import {
   productsTable,
@@ -359,6 +362,43 @@ router.patch("/content/:key", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ─── GitHub Deploy ────────────────────────────────────────────────────────────
+
+router.get("/git-status", async (_req, res) => {
+  try {
+    const [{ stdout: status }, { stdout: branch }, { stdout: remote }] = await Promise.all([
+      execFileAsync("git", ["status", "--short"]),
+      execFileAsync("git", ["branch", "--show-current"]),
+      execFileAsync("git", ["remote", "-v"]),
+    ]);
+    res.json({ status: status.trim(), branch: branch.trim(), remote: remote.trim() });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/deploy", async (req, res) => {
+  const { message } = req.body;
+  if (!message || typeof message !== "string" || message.trim().length < 3) {
+    return res.status(400).json({ error: "Messaggio di commit obbligatorio (min 3 caratteri)" });
+  }
+  try {
+    await execFileAsync("git", ["add", "-A"]);
+    let commitOutput = "";
+    try {
+      const { stdout } = await execFileAsync("git", ["commit", "-m", message.trim()]);
+      commitOutput = stdout.trim();
+    } catch {
+      commitOutput = "Nessun cambiamento da committare.";
+    }
+    const { stdout: pushOut, stderr: pushErr } = await execFileAsync("git", ["push"]);
+    const output = [commitOutput, pushOut.trim(), pushErr.trim()].filter(Boolean).join("\n");
+    res.json({ ok: true, output });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Errore durante la pubblicazione" });
   }
 });
 
