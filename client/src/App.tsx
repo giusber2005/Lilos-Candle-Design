@@ -21,6 +21,7 @@ import AdminDashboardPage from "@/pages/admin/DashboardPage";
 import AdminOrdersPage from "@/pages/admin/OrdersPage";
 import AdminProductsPage from "@/pages/admin/ProductsPage";
 import AdminContentPage from "@/pages/admin/ContentPage";
+import AdminCommentsPage from "@/pages/admin/CommentsPage";
 import AdminSettingsPage from "@/pages/admin/SettingsPage";
 import AdminDeployPage from "@/pages/admin/DeployPage";
 
@@ -47,6 +48,9 @@ function AdminRouter() {
       </Route>
       <Route path="/admin/content">
         <ProtectedAdmin component={AdminContentPage} />
+      </Route>
+      <Route path="/admin/comments">
+        <ProtectedAdmin component={AdminCommentsPage} />
       </Route>
       <Route path="/admin/settings">
         <ProtectedAdmin component={AdminSettingsPage} />

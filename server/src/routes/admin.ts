@@ -12,6 +12,7 @@ import {
   newsletterSubscribersTable,
   siteContentTable,
   adminSettingsTable,
+  commentsTable,
 } from "../db/schema/index.js";
 import { eq, desc, count, sum, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
@@ -361,6 +362,42 @@ router.patch("/content/:key", async (req, res) => {
       .returning();
     if (!row) return res.status(404).json({ error: "Content key not found" });
     res.json(row);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ─── Comments ─────────────────────────────────────────────────────────────────
+
+router.get("/comments", async (_req, res) => {
+  try {
+    const comments = await db
+      .select()
+      .from(commentsTable)
+      .orderBy(desc(commentsTable.createdAt));
+    res.json(
+      comments.map((comment) => ({
+        ...comment,
+        createdAt: formatDate(comment.createdAt),
+      }))
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/comments/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid comment ID" });
+    const [deletedComment] = await db
+      .delete(commentsTable)
+      .where(eq(commentsTable.id, id))
+      .returning();
+    if (!deletedComment) return res.status(404).json({ error: "Comment not found" });
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });

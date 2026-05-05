@@ -1,0 +1,1 @@
+ALTER TABLE `comments` ADD `rating` integer DEFAULT 5 NOT NULL;

@@ -5,7 +5,7 @@ import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useContent, useJsonContent } from "@/lib/content-context";
 
 type Review = { name: string; text: string; rating: number };
-type UserComment = { id: number; name: string; message: string; createdAt: string };
+type UserComment = { id: number; name: string; message: string; rating: number; createdAt: string };
 
 function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "large" | "small"; color?: string }) {
   const w = size === "large" ? 200 : 120;
@@ -77,6 +77,7 @@ export default function HomePage() {
   const [submitting, setSubmitting] = useState(false);
   const [commentName, setCommentName] = useState("");
   const [commentMessage, setCommentMessage] = useState("");
+  const [commentRating, setCommentRating] = useState(5);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [commentStatus, setCommentStatus] = useState<{ type: "idle" | "success" | "error"; message: string }>({ type: "idle", message: "" });
 
@@ -115,6 +116,7 @@ export default function HomePage() {
         body: JSON.stringify({
           name: commentName.trim(),
           message,
+          rating: commentRating,
         }),
       });
       if (!response.ok) {
@@ -127,6 +129,7 @@ export default function HomePage() {
       setUserComments((prev) => [createdComment, ...prev].slice(0, 20));
       setCommentMessage("");
       setCommentName("");
+      setCommentRating(5);
       setCommentStatus({ type: "success", message: "Commento inviato con successo." });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Errore durante l'invio del commento.";
@@ -140,7 +143,7 @@ export default function HomePage() {
     ...userComments.map((comment) => ({
       name: comment.name,
       text: comment.message,
-      rating: 5,
+      rating: comment.rating,
     })),
     ...reviews,
   ];
@@ -347,6 +350,27 @@ export default function HomePage() {
                 maxLength={600}
                 required
               />
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Valutazione</p>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }, (_, i) => i + 1).map((starValue) => (
+                    <button
+                      key={starValue}
+                      type="button"
+                      onClick={() => setCommentRating(starValue)}
+                      aria-label={`Seleziona ${starValue} stelle`}
+                      className="p-1"
+                    >
+                      <Star
+                        size={18}
+                        fill={starValue <= commentRating ? "#7C6B8A" : "none"}
+                        stroke="#7C6B8A"
+                      />
+                    </button>
+                  ))}
+                  <span className="text-sm text-[#8B8680] ml-2">{commentRating}/5</span>
+                </div>
+              </div>
               <button
                 type="submit"
                 disabled={commentSubmitting}

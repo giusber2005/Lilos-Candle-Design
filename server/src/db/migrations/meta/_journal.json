@@ -15,6 +15,13 @@
       "when": 1777978507476,
       "tag": "0001_graceful_abomination",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1777982030326,
+      "tag": "0002_omniscient_nuke",
+      "breakpoints": true
     }
   ]
 }

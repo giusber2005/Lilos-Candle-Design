@@ -23,6 +23,7 @@ router.post("/", async (req, res) => {
   try {
     const rawName = typeof req.body?.name === "string" ? req.body.name.trim() : "";
     const rawMessage = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+    const rawRating = Number(req.body?.rating);
 
     if (!rawMessage) {
       return res.status(400).json({ error: "Message is required" });
@@ -33,12 +34,16 @@ router.post("/", async (req, res) => {
     if (rawName.length > 80) {
       return res.status(400).json({ error: "Name is too long" });
     }
+    if (!Number.isInteger(rawRating) || rawRating < 1 || rawRating > 5) {
+      return res.status(400).json({ error: "Rating must be an integer from 1 to 5" });
+    }
 
     const [createdComment] = await db
       .insert(commentsTable)
       .values({
         name: rawName || "Cliente",
         message: rawMessage,
+        rating: rawRating,
       })
       .returning();
 
