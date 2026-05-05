@@ -232,6 +232,8 @@ router.delete("/products/:id", async (req, res) => {
       await db.delete(cartItemsTable).where(inArray(cartItemsTable.variantId, vids));
       await db.delete(orderItemsTable).where(inArray(orderItemsTable.variantId, vids));
     }
+    await db.delete(cartItemsTable).where(eq(cartItemsTable.productId, id));
+    await db.delete(orderItemsTable).where(eq(orderItemsTable.productId, id));
 
     await db.delete(productVariantsTable).where(eq(productVariantsTable.productId, id));
     await db.delete(productsTable).where(eq(productsTable.id, id));

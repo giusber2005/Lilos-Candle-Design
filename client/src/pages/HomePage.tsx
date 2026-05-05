@@ -4,6 +4,9 @@ import { ArrowRight, Star, ChevronDown } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useContent, useJsonContent } from "@/lib/content-context";
 
+type Review = { name: string; text: string; rating: number };
+type UserComment = { id: number; name: string; message: string; createdAt: string };
+
 function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "large" | "small"; color?: string }) {
   const w = size === "large" ? 200 : 120;
   const h = size === "large" ? 220 : 132;
@@ -30,7 +33,7 @@ const defaultProcessSteps = [
   { n: "04", title: "La cura", desc: "Ogni pezzo è rifinito singolarmente." },
 ];
 
-const defaultReviews = [
+const defaultReviews: Review[] = [
   { name: "Giulia M.", text: "Semplicemente bellissima. L'aroma di amarena è delicato e avvolgente. Il design in cemento è unico nel suo genere.", rating: 5 },
   { name: "Marco T.", text: "Ho regalato la Big Boy ad una amica — era entusiasta. La qualità è eccezionale, si vede che è fatta con cura.", rating: 5 },
   { name: "Sofia R.", text: "La Lil One è perfetta per la mia scrivania. Piccola ma intensa. Tornerò sicuramente ad acquistare.", rating: 5 },
@@ -40,9 +43,10 @@ export default function HomePage() {
   useScrollReveal();
   const c = useContent();
   const processSteps = useJsonContent("process_steps", defaultProcessSteps);
-  const reviews = useJsonContent("reviews", defaultReviews);
+  const reviews = useJsonContent<Review>("reviews", defaultReviews);
 
   const [featuredProducts, setFeaturedProducts] = useState<{ id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean }[]>([]);
+  const [userComments, setUserComments] = useState<UserComment[]>([]);
 
   useEffect(() => {
     fetch("/api/products")
@@ -54,9 +58,27 @@ export default function HomePage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetch("/api/comments")
+      .then((r) => {
+        if (!r.ok) throw new Error("Unable to load comments");
+        return r.json();
+      })
+      .then((rows: UserComment[]) => {
+        setUserComments(rows);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
+
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [commentName, setCommentName] = useState("");
+  const [commentMessage, setCommentMessage] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [commentStatus, setCommentStatus] = useState<{ type: "idle" | "success" | "error"; message: string }>({ type: "idle", message: "" });
 
   const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +97,53 @@ export default function HomePage() {
       setSubmitting(false);
     }
   };
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const message = commentMessage.trim();
+    if (!message) {
+      setCommentStatus({ type: "error", message: "Scrivi un commento prima di inviare." });
+      return;
+    }
+
+    setCommentSubmitting(true);
+    setCommentStatus({ type: "idle", message: "" });
+    try {
+      const response = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: commentName.trim(),
+          message,
+        }),
+      });
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        const errorMessage = typeof errorBody?.error === "string" ? errorBody.error : "Impossibile inviare il commento.";
+        throw new Error(errorMessage);
+      }
+
+      const createdComment = (await response.json()) as UserComment;
+      setUserComments((prev) => [createdComment, ...prev].slice(0, 20));
+      setCommentMessage("");
+      setCommentName("");
+      setCommentStatus({ type: "success", message: "Commento inviato con successo." });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Errore durante l'invio del commento.";
+      setCommentStatus({ type: "error", message });
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
+  const allReviews: Review[] = [
+    ...userComments.map((comment) => ({
+      name: comment.name,
+      text: comment.message,
+      rating: 5,
+    })),
+    ...reviews,
+  ];
 
   return (
     <div>
@@ -245,8 +314,8 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {reviews.map((r, i) => (
-              <div key={r.name} className={`reveal reveal-delay-${i + 1} bg-[#F0EBE3] p-8`}>
+            {allReviews.map((r, i) => (
+              <div key={`${r.name}-${i}`} className={`reveal reveal-delay-${Math.min(i + 1, 6)} bg-[#F0EBE3] p-8`}>
                 <div className="flex gap-1 mb-5">
                   {Array.from({ length: r.rating }).map((_, j) => (
                     <Star key={j} size={14} fill="#7C6B8A" stroke="none" />
@@ -258,6 +327,39 @@ export default function HomePage() {
                 <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">{r.name}</p>
               </div>
             ))}
+          </div>
+          <div className="mt-12 max-w-2xl mx-auto reveal">
+            <form onSubmit={handleCommentSubmit} className="bg-[#F0EBE3] p-8 flex flex-col gap-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Lascia un commento</p>
+              <input
+                type="text"
+                value={commentName}
+                onChange={(e) => setCommentName(e.target.value)}
+                placeholder="Il tuo nome (opzionale)"
+                className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A]"
+                maxLength={80}
+              />
+              <textarea
+                value={commentMessage}
+                onChange={(e) => setCommentMessage(e.target.value)}
+                placeholder="Scrivi qui il tuo commento..."
+                className="min-h-28 bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] resize-y"
+                maxLength={600}
+                required
+              />
+              <button
+                type="submit"
+                disabled={commentSubmitting}
+                className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
+              >
+                {commentSubmitting ? "Invio..." : "Invia commento"}
+              </button>
+              {commentStatus.type !== "idle" && (
+                <p className={commentStatus.type === "success" ? "text-sm text-[#3F6D47]" : "text-sm text-[#8A3D3D]"}>
+                  {commentStatus.message}
+                </p>
+              )}
+            </form>
           </div>
         </div>
       </section>

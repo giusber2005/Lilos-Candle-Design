@@ -8,6 +8,13 @@
       "when": 1777638866371,
       "tag": "0000_heavy_omega_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777978507476,
+      "tag": "0001_graceful_abomination",
+      "breakpoints": true
     }
   ]
 }

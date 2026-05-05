@@ -6,6 +6,7 @@ import ordersRouter from "./orders";
 import newsletterRouter from "./newsletter";
 import adminRouter from "./admin";
 import contentRouter from "./content";
+import commentsRouter from "./comments";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/orders", ordersRouter);
 router.use("/newsletter", newsletterRouter);
 router.use("/admin", adminRouter);
 router.use("/content", contentRouter);
+router.use("/comments", commentsRouter);
 
 export default router;
