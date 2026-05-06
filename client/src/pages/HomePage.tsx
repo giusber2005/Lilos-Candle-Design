@@ -75,6 +75,10 @@ export default function HomePage() {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [commentEmail, setCommentEmail] = useState("");
+  const [commentEmailVerified, setCommentEmailVerified] = useState(false);
+  const [commentEmailChecking, setCommentEmailChecking] = useState(false);
+  const [commentEmailError, setCommentEmailError] = useState("");
   const [commentName, setCommentName] = useState("");
   const [commentMessage, setCommentMessage] = useState("");
   const [commentRating, setCommentRating] = useState(5);
@@ -99,6 +103,31 @@ export default function HomePage() {
     }
   };
 
+  const handleEmailVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = commentEmail.trim();
+    if (!email) {
+      setCommentEmailError("Inserisci la tua email.");
+      return;
+    }
+    setCommentEmailChecking(true);
+    setCommentEmailError("");
+    try {
+      const res = await fetch(`/api/comments/check-purchase?email=${encodeURIComponent(email)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Errore di verifica.");
+      if (!data.hasPurchased) {
+        setCommentEmailError("Non risulta alcun acquisto associato a questa email.");
+      } else {
+        setCommentEmailVerified(true);
+      }
+    } catch (err) {
+      setCommentEmailError(err instanceof Error ? err.message : "Errore di verifica.");
+    } finally {
+      setCommentEmailChecking(false);
+    }
+  };
+
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const message = commentMessage.trim();
@@ -114,6 +143,7 @@ export default function HomePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          email: commentEmail.trim(),
           name: commentName.trim(),
           message,
           rating: commentRating,
@@ -332,58 +362,87 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-12 max-w-2xl mx-auto reveal">
-            <form onSubmit={handleCommentSubmit} className="bg-[#F0EBE3] p-8 flex flex-col gap-4">
+            <div className="bg-[#F0EBE3] p-8 flex flex-col gap-4">
               <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Lascia un commento</p>
-              <input
-                type="text"
-                value={commentName}
-                onChange={(e) => setCommentName(e.target.value)}
-                placeholder="Il tuo nome (opzionale)"
-                className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A]"
-                maxLength={80}
-              />
-              <textarea
-                value={commentMessage}
-                onChange={(e) => setCommentMessage(e.target.value)}
-                placeholder="Scrivi qui il tuo commento..."
-                className="min-h-28 bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] resize-y"
-                maxLength={600}
-                required
-              />
-              <div className="flex flex-col gap-2">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Valutazione</p>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }, (_, i) => i + 1).map((starValue) => (
-                    <button
-                      key={starValue}
-                      type="button"
-                      onClick={() => setCommentRating(starValue)}
-                      aria-label={`Seleziona ${starValue} stelle`}
-                      className="p-1"
-                    >
-                      <Star
-                        size={18}
-                        fill={starValue <= commentRating ? "#7C6B8A" : "none"}
-                        stroke="#7C6B8A"
-                      />
-                    </button>
-                  ))}
-                  <span className="text-sm text-[#8B8680] ml-2">{commentRating}/5</span>
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={commentSubmitting}
-                className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
-              >
-                {commentSubmitting ? "Invio..." : "Invia commento"}
-              </button>
-              {commentStatus.type !== "idle" && (
-                <p className={commentStatus.type === "success" ? "text-sm text-[#3F6D47]" : "text-sm text-[#8A3D3D]"}>
-                  {commentStatus.message}
-                </p>
+              {!commentEmailVerified ? (
+                <form onSubmit={handleEmailVerify} className="flex flex-col gap-4">
+                  <p className="text-sm text-[#5C4A40] font-light">
+                    Solo i clienti che hanno effettuato un acquisto possono lasciare un commento. Inserisci la tua email per verificare.
+                  </p>
+                  <input
+                    type="email"
+                    value={commentEmail}
+                    onChange={(e) => { setCommentEmail(e.target.value); setCommentEmailError(""); }}
+                    placeholder="La tua email"
+                    className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A]"
+                    required
+                  />
+                  {commentEmailError && (
+                    <p className="text-sm text-[#8A3D3D]">{commentEmailError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={commentEmailChecking}
+                    className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
+                  >
+                    {commentEmailChecking ? "Verifica..." : "Verifica email"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleCommentSubmit} className="flex flex-col gap-4">
+                  <p className="text-sm text-[#3F6D47]">Email verificata: {commentEmail}</p>
+                  <input
+                    type="text"
+                    value={commentName}
+                    onChange={(e) => setCommentName(e.target.value)}
+                    placeholder="Il tuo nome (opzionale)"
+                    className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A]"
+                    maxLength={80}
+                  />
+                  <textarea
+                    value={commentMessage}
+                    onChange={(e) => setCommentMessage(e.target.value)}
+                    placeholder="Scrivi qui il tuo commento..."
+                    className="min-h-28 bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] resize-y"
+                    maxLength={600}
+                    required
+                  />
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Valutazione</p>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }, (_, i) => i + 1).map((starValue) => (
+                        <button
+                          key={starValue}
+                          type="button"
+                          onClick={() => setCommentRating(starValue)}
+                          aria-label={`Seleziona ${starValue} stelle`}
+                          className="p-1"
+                        >
+                          <Star
+                            size={18}
+                            fill={starValue <= commentRating ? "#7C6B8A" : "none"}
+                            stroke="#7C6B8A"
+                          />
+                        </button>
+                      ))}
+                      <span className="text-sm text-[#8B8680] ml-2">{commentRating}/5</span>
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={commentSubmitting}
+                    className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
+                  >
+                    {commentSubmitting ? "Invio..." : "Invia commento"}
+                  </button>
+                  {commentStatus.type !== "idle" && (
+                    <p className={commentStatus.type === "success" ? "text-sm text-[#3F6D47]" : "text-sm text-[#8A3D3D]"}>
+                      {commentStatus.message}
+                    </p>
+                  )}
+                </form>
               )}
-            </form>
+            </div>
           </div>
         </div>
       </section>
