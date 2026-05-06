@@ -37,12 +37,79 @@ export function Navbar() {
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/">
-            <span
-              className={`font-serif text-xl tracking-widest uppercase cursor-pointer transition-colors duration-300 ${
-                isLight ? "text-white" : "text-[#2C2826]"
-              }`}
-            >
-              {brandName}
+            <span className="flex items-center gap-2.5 cursor-pointer">
+              {/* Animated candle icon */}
+              <span className="relative flex-shrink-0" style={{ width: 13, height: 28 }}>
+                {/* Flame SVG */}
+                <svg
+                  className="navbar-candle-flame"
+                  width="11"
+                  height="16"
+                  viewBox="0 0 11 16"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)" }}
+                  aria-hidden="true"
+                >
+                  <defs>
+                    <radialGradient id="nf-outer" cx="50%" cy="78%" r="55%">
+                      <stop offset="0%"   stopColor="#fff9c4" />
+                      <stop offset="32%"  stopColor="#ffb74d" />
+                      <stop offset="68%"  stopColor="#e64a19" />
+                      <stop offset="100%" stopColor="#bf360c" stopOpacity="0" />
+                    </radialGradient>
+                    <radialGradient id="nf-inner" cx="50%" cy="62%" r="44%">
+                      <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.9" />
+                      <stop offset="50%"  stopColor="#fff9c4" />
+                      <stop offset="100%" stopColor="#ffeb3b" stopOpacity="0.3" />
+                    </radialGradient>
+                  </defs>
+                  {/* Outer flame */}
+                  <path
+                    d="M5.5 15.5C3 15.5 1 12.5 1 10.2C1 6.5 5.5 1 5.5 1C5.5 1 10 6.5 10 10.2C10 12.5 8 15.5 5.5 15.5Z"
+                    fill="url(#nf-outer)"
+                  />
+                  {/* Inner core */}
+                  <path
+                    d="M5.5 13C4.2 13 3.5 11.7 3.5 10.6C3.5 8.8 5.5 6 5.5 6C5.5 6 7.5 8.8 7.5 10.6C7.5 11.7 6.8 13 5.5 13Z"
+                    fill="url(#nf-inner)"
+                  />
+                </svg>
+                {/* Wick */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 14,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 1.5,
+                    height: 6,
+                    background: "#4A3D35",
+                    borderRadius: "0 0 1px 1px",
+                  }}
+                />
+                {/* Candle body stub */}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 1,
+                    right: 1,
+                    height: 9,
+                    borderRadius: "1px 1px 0 0",
+                    background: isLight ? "rgba(255,255,255,0.22)" : "rgba(197,190,184,0.4)",
+                    border: `1px solid ${isLight ? "rgba(255,255,255,0.12)" : "rgba(180,172,165,0.25)"}`,
+                  }}
+                />
+              </span>
+
+              {/* Brand name */}
+              <span
+                className={`navbar-brand-text font-serif text-xl tracking-widest uppercase transition-colors duration-300 ${
+                  isLight ? "text-white" : "text-[#2C2826]"
+                }`}
+              >
+                {brandName}
+              </span>
             </span>
           </Link>
 
