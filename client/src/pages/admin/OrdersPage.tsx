@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { useAdminAuth, adminFetch } from "@/lib/admin-auth";
 import { ExternalLink } from "lucide-react";
+import OrdersGeoSection from "@/components/OrdersGeoSection";
 
 interface Order {
   id: number;
@@ -69,6 +70,8 @@ export default function OrdersPage() {
   return (
     <AdminLayout>
       <h1 className="font-serif text-3xl text-[#2C2826] mb-8">Ordini</h1>
+
+      {!loading && orders.length > 0 && <OrdersGeoSection orders={orders} />}
 
       <div className="bg-white border border-[#E8E3DC] overflow-x-auto">
         {loading ? (
