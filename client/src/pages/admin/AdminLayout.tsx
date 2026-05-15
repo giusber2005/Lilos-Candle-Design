@@ -10,6 +10,7 @@ import {
   LogOut,
   Upload,
   MessageSquare,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/admin/orders", label: "Ordini", icon: ShoppingBag },
   { href: "/admin/content", label: "Contenuti", icon: FileText },
   { href: "/admin/comments", label: "Commenti", icon: MessageSquare },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/settings", label: "Impostazioni", icon: Settings },
   { href: "/admin/deploy", label: "Pubblica", icon: Upload },
 ];

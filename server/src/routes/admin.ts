@@ -17,10 +17,15 @@ import {
 import { eq, desc, count, sum, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { requireAdmin, signAdminToken } from "../middleware/auth";
+import { sendNewsletterEmail, testSmtpConnection } from "../lib/email.js";
 
 const router: IRouter = Router();
 
 function parseImages(raw: string | null | undefined): string[] {
+  try { return JSON.parse(raw ?? "[]"); } catch { return []; }
+}
+
+function parsePurchaseQuantities(raw: string | null | undefined): Array<{ qty: number; label: string; discount: number }> {
   try { return JSON.parse(raw ?? "[]"); } catch { return []; }
 }
 
@@ -150,7 +155,7 @@ router.get("/products", async (_req, res) => {
           .select()
           .from(productVariantsTable)
           .where(eq(productVariantsTable.productId, p.id));
-        return { ...p, images: parseImages(p.images), variants };
+        return { ...p, images: parseImages(p.images), purchaseQuantities: parsePurchaseQuantities(p.purchaseQuantities), variants };
       })
     );
     res.json(result);
@@ -164,7 +169,7 @@ router.post("/products", async (req, res) => {
   try {
     const {
       name, slug, description, shortDescription, price, imageUrl, images,
-      size, material, burnTime, weight, dimensions, featured,
+      size, material, burnTime, weight, dimensions, featured, purchaseQuantities,
     } = req.body;
     const [product] = await db
       .insert(productsTable)
@@ -175,9 +180,10 @@ router.post("/products", async (req, res) => {
         images: JSON.stringify(Array.isArray(images) ? images : []),
         size, material, burnTime, weight, dimensions,
         featured: featured || false,
+        purchaseQuantities: JSON.stringify(Array.isArray(purchaseQuantities) ? purchaseQuantities : []),
       })
       .returning();
-    res.status(201).json({ ...product, images: parseImages(product.images) });
+    res.status(201).json({ ...product, images: parseImages(product.images), purchaseQuantities: parsePurchaseQuantities(product.purchaseQuantities) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -189,7 +195,7 @@ router.patch("/products/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const {
       name, slug, description, shortDescription, price, imageUrl, images,
-      size, material, burnTime, weight, dimensions, featured,
+      size, material, burnTime, weight, dimensions, featured, purchaseQuantities,
     } = req.body;
     const updates: Record<string, any> = {};
     if (name !== undefined) updates.name = name;
@@ -205,13 +211,14 @@ router.patch("/products/:id", async (req, res) => {
     if (weight !== undefined) updates.weight = weight;
     if (dimensions !== undefined) updates.dimensions = dimensions;
     if (featured !== undefined) updates.featured = featured;
+    if (purchaseQuantities !== undefined) updates.purchaseQuantities = JSON.stringify(Array.isArray(purchaseQuantities) ? purchaseQuantities : []);
     const [product] = await db
       .update(productsTable)
       .set(updates)
       .where(eq(productsTable.id, id))
       .returning();
     if (!product) return res.status(404).json({ error: "Product not found" });
-    res.json({ ...product, images: parseImages(product.images) });
+    res.json({ ...product, images: parseImages(product.images), purchaseQuantities: parsePurchaseQuantities(product.purchaseQuantities) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
@@ -401,6 +408,100 @@ router.delete("/comments/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ─── Email Settings ───────────────────────────────────────────────────────────
+
+const EMAIL_SETTING_KEYS = ["smtp_host", "smtp_port", "smtp_user", "smtp_pass", "smtp_from", "smtp_secure"];
+const EMAIL_TEMPLATE_KEYS = ["email_order_subject", "email_order_body", "email_newsletter_default_subject", "email_newsletter_default_body"];
+
+router.get("/email-settings", async (_req, res) => {
+  try {
+    const rows = await db.select().from(adminSettingsTable)
+      .where(inArray(adminSettingsTable.key, [...EMAIL_SETTING_KEYS, ...EMAIL_TEMPLATE_KEYS]));
+    const out: Record<string, string> = {};
+    for (const r of rows) out[r.key] = r.key === "smtp_pass" ? "••••••••" : r.value;
+    res.json(out);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/email-settings", async (req, res) => {
+  try {
+    const allowed = new Set([...EMAIL_SETTING_KEYS, ...EMAIL_TEMPLATE_KEYS]);
+    const entries = Object.entries(req.body as Record<string, string>).filter(([k]) => allowed.has(k));
+    for (const [key, value] of entries) {
+      if (key === "smtp_pass" && value === "••••••••") continue;
+      const [existing] = await db.select().from(adminSettingsTable).where(eq(adminSettingsTable.key, key));
+      if (existing) {
+        await db.update(adminSettingsTable).set({ value, updatedAt: new Date() }).where(eq(adminSettingsTable.key, key));
+      } else {
+        await db.insert(adminSettingsTable).values({ key, value });
+      }
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/email-settings/test", async (req, res) => {
+  try {
+    const { host, port, secure, user, pass } = req.body;
+    await testSmtpConnection({ host, port: parseInt(port || "587"), secure: secure === true || secure === "true", user, pass });
+    res.json({ ok: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Connessione SMTP fallita" });
+  }
+});
+
+// ─── Newsletter ───────────────────────────────────────────────────────────────
+
+router.get("/newsletter/subscribers", async (_req, res) => {
+  try {
+    const subscribers = await db.select().from(newsletterSubscribersTable).orderBy(desc(newsletterSubscribersTable.createdAt));
+    res.json(subscribers.map((s) => ({ ...s, createdAt: formatDate(s.createdAt) })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/newsletter/subscribers/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await db.delete(newsletterSubscribersTable).where(eq(newsletterSubscribersTable.id, id));
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/newsletter/send", async (req, res) => {
+  try {
+    const { subject, body, subscriberIds } = req.body;
+    if (!subject || !body) return res.status(400).json({ error: "subject e body obbligatori" });
+
+    let subscribers;
+    if (Array.isArray(subscriberIds) && subscriberIds.length > 0) {
+      subscribers = await db.select().from(newsletterSubscribersTable)
+        .where(inArray(newsletterSubscribersTable.id, subscriberIds));
+    } else {
+      subscribers = await db.select().from(newsletterSubscribersTable);
+    }
+
+    if (subscribers.length === 0) return res.status(400).json({ error: "Nessun iscritto" });
+
+    const result = await sendNewsletterEmail({ subscribers, subject, body });
+    res.json(result);
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Errore invio newsletter" });
   }
 });
 

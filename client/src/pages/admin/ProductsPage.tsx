@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { useAdminAuth, adminFetch } from "@/lib/admin-auth";
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, X, Check } from "lucide-react";
+
+interface PurchaseOption {
+  qty: number;
+  label: string;
+  discount: number;
+}
 
 interface Variant {
   id: number;
@@ -28,6 +34,7 @@ interface Product {
   weight: string;
   dimensions: string;
   featured: boolean;
+  purchaseQuantities: PurchaseOption[];
   variants: Variant[];
 }
 
@@ -36,6 +43,7 @@ const emptyProduct = {
   price: "", imageUrl: "", images: "",
   size: "", material: "", burnTime: "", weight: "", dimensions: "",
   featured: false,
+  purchaseQuantities: [] as PurchaseOption[],
 };
 
 const emptyVariant = { color: "", colorHex: "#C5BEB8", aroma: "", stock: "0", imageUrl: "" };
@@ -52,7 +60,9 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [variantForms, setVariantForms] = useState<Record<number, typeof emptyVariant | null>>({});
+
+  // variant: null = closed, object = add new, or prefilled for edit
+  const [variantForms, setVariantForms] = useState<Record<number, (typeof emptyVariant & { _editId?: number }) | null>>({});
 
   const load = () => {
     setLoading(true);
@@ -78,6 +88,7 @@ export default function ProductsPage() {
       imageUrl: p.imageUrl || "", images: p.images.join(", "),
       size: p.size, material: p.material, burnTime: p.burnTime,
       weight: p.weight, dimensions: p.dimensions, featured: p.featured,
+      purchaseQuantities: p.purchaseQuantities ?? [],
     });
     setShowForm(true);
   };
@@ -89,6 +100,7 @@ export default function ProductsPage() {
       price: parseFloat(form.price as string),
       images: (form.images as string).split(",").map((s) => s.trim()).filter(Boolean),
       imageUrl: form.imageUrl || null,
+      purchaseQuantities: form.purchaseQuantities,
     };
     try {
       if (editProduct) {
@@ -125,12 +137,30 @@ export default function ProductsPage() {
     }
   };
 
-  const saveVariant = async (productId: number, variantId?: number) => {
+  const openAddVariant = (productId: number) => {
+    setVariantForms((v) => ({ ...v, [productId]: { ...emptyVariant } }));
+  };
+
+  const openEditVariant = (productId: number, variant: Variant) => {
+    setVariantForms((v) => ({
+      ...v,
+      [productId]: {
+        color: variant.color,
+        colorHex: variant.colorHex,
+        aroma: variant.aroma,
+        stock: String(variant.stock),
+        imageUrl: variant.imageUrl || "",
+        _editId: variant.id,
+      },
+    }));
+  };
+
+  const saveVariant = async (productId: number) => {
     const vf = variantForms[productId];
     if (!vf) return;
-    const body = { ...vf, stock: parseInt(vf.stock), imageUrl: vf.imageUrl || null };
-    if (variantId) {
-      await adminFetch(`/api/admin/products/${productId}/variants/${variantId}`, token, {
+    const body = { color: vf.color, colorHex: vf.colorHex, aroma: vf.aroma, stock: parseInt(vf.stock), imageUrl: vf.imageUrl || null };
+    if (vf._editId) {
+      await adminFetch(`/api/admin/products/${productId}/variants/${vf._editId}`, token, {
         method: "PATCH", body: JSON.stringify(body),
       });
     } else {
@@ -146,6 +176,29 @@ export default function ProductsPage() {
     if (!confirm("Eliminare questa variante?")) return;
     await adminFetch(`/api/admin/products/${productId}/variants/${variantId}`, token, { method: "DELETE" });
     load();
+  };
+
+  // Purchase quantities helpers
+  const addPurchaseOption = () => {
+    setForm((f) => ({
+      ...f,
+      purchaseQuantities: [...(f.purchaseQuantities as PurchaseOption[]), { qty: 1, label: "", discount: 0 }],
+    }));
+  };
+
+  const updatePurchaseOption = (idx: number, field: keyof PurchaseOption, value: string | number) => {
+    setForm((f) => {
+      const pq = [...(f.purchaseQuantities as PurchaseOption[])];
+      pq[idx] = { ...pq[idx], [field]: field === "label" ? value : Number(value) };
+      return { ...f, purchaseQuantities: pq };
+    });
+  };
+
+  const removePurchaseOption = (idx: number) => {
+    setForm((f) => ({
+      ...f,
+      purchaseQuantities: (f.purchaseQuantities as PurchaseOption[]).filter((_, i) => i !== idx),
+    }));
   };
 
   const inputCls = "w-full border border-[#E8E3DC] px-3 py-2 text-sm text-[#2C2826] focus:outline-none focus:border-[#8B8680]";
@@ -193,6 +246,9 @@ export default function ProductsPage() {
                   {p.featured && (
                     <span className="text-xs bg-[#7C6B8A] text-white px-2 py-0.5 rounded">In evidenza</span>
                   )}
+                  {p.purchaseQuantities?.length > 0 && (
+                    <span className="text-xs bg-[#4A7C5B] text-white px-2 py-0.5 rounded">{p.purchaseQuantities.length} opzioni qtà</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => openEdit(p)} className="text-[#8B8680] hover:text-[#2C2826] p-2">
@@ -237,7 +293,7 @@ export default function ProductsPage() {
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Varianti</p>
                     <button
-                      onClick={() => setVariantForms((v) => ({ ...v, [p.id]: { ...emptyVariant } }))}
+                      onClick={() => openAddVariant(p.id)}
                       className="text-xs text-[#7C6B8A] hover:underline flex items-center gap-1"
                     >
                       <Plus size={12} /> Aggiungi variante
@@ -245,84 +301,59 @@ export default function ProductsPage() {
                   </div>
                   <div className="space-y-2">
                     {p.variants.map((v) => (
-                      <div key={v.id} className="flex items-center justify-between bg-[#FAF8F5] px-4 py-2 text-sm">
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="w-5 h-5 rounded-full border border-[#E8E3DC] flex-shrink-0"
-                            style={{ background: v.colorHex }}
+                      <div key={v.id}>
+                        {variantForms[p.id]?._editId === v.id ? (
+                          <VariantForm
+                            vf={variantForms[p.id]!}
+                            onChange={(vf) => setVariantForms((prev) => ({ ...prev, [p.id]: vf }))}
+                            onSave={() => saveVariant(p.id)}
+                            onCancel={() => setVariantForms((prev) => ({ ...prev, [p.id]: null }))}
+                            inputCls={inputCls}
+                            isEdit
                           />
-                          <span className="text-[#2C2826]">{v.color}</span>
-                          <span className="text-[#8B8680]">·</span>
-                          <span className="text-[#8B8680]">{v.aroma}</span>
-                          <span className="text-[#8B8680]">·</span>
-                          <span className="text-[#8B8680]">Stock: {v.stock}</span>
-                        </div>
-                        <button
-                          onClick={() => deleteVariant(p.id, v.id)}
-                          className="text-red-400 hover:text-red-600"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        ) : (
+                          <div className="flex items-center justify-between bg-[#FAF8F5] px-4 py-2 text-sm">
+                            <div className="flex items-center gap-3">
+                              <span
+                                className="w-5 h-5 rounded-full border border-[#E8E3DC] flex-shrink-0"
+                                style={{ background: v.colorHex }}
+                              />
+                              <span className="text-[#2C2826]">{v.color}</span>
+                              <span className="text-[#8B8680]">·</span>
+                              <span className="text-[#8B8680]">{v.aroma}</span>
+                              <span className="text-[#8B8680]">·</span>
+                              <span className="text-[#8B8680]">Stock: {v.stock}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => openEditVariant(p.id, v)}
+                                className="text-[#8B8680] hover:text-[#2C2826] p-1"
+                                title="Modifica variante"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                onClick={() => deleteVariant(p.id, v.id)}
+                                className="text-red-400 hover:text-red-600 p-1"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
-                    {variantForms[p.id] && (
-                      <div className="bg-[#F0EBE3] p-4 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <input
-                            placeholder="Colore (es. Grigio cemento)"
-                            value={variantForms[p.id]!.color}
-                            onChange={(e) => setVariantForms((v) => ({ ...v, [p.id]: { ...v[p.id]!, color: e.target.value } }))}
-                            className={inputCls}
-                          />
-                          <div className="flex gap-2">
-                            <input
-                              type="color"
-                              value={variantForms[p.id]!.colorHex}
-                              onChange={(e) => setVariantForms((v) => ({ ...v, [p.id]: { ...v[p.id]!, colorHex: e.target.value } }))}
-                              className="h-10 w-12 border border-[#E8E3DC] cursor-pointer p-1"
-                            />
-                            <input
-                              placeholder="HEX"
-                              value={variantForms[p.id]!.colorHex}
-                              onChange={(e) => setVariantForms((v) => ({ ...v, [p.id]: { ...v[p.id]!, colorHex: e.target.value } }))}
-                              className={`${inputCls} flex-1`}
-                            />
-                          </div>
-                          <input
-                            placeholder="Aroma (es. Vaniglia)"
-                            value={variantForms[p.id]!.aroma}
-                            onChange={(e) => setVariantForms((v) => ({ ...v, [p.id]: { ...v[p.id]!, aroma: e.target.value } }))}
-                            className={inputCls}
-                          />
-                          <input
-                            type="number"
-                            placeholder="Stock"
-                            value={variantForms[p.id]!.stock}
-                            onChange={(e) => setVariantForms((v) => ({ ...v, [p.id]: { ...v[p.id]!, stock: e.target.value } }))}
-                            className={inputCls}
-                          />
-                          <input
-                            placeholder="Immagine URL (opzionale)"
-                            value={variantForms[p.id]!.imageUrl}
-                            onChange={(e) => setVariantForms((v) => ({ ...v, [p.id]: { ...v[p.id]!, imageUrl: e.target.value } }))}
-                            className={`${inputCls} col-span-2`}
-                          />
-                        </div>
-                        <div className="flex gap-2 justify-end">
-                          <button
-                            onClick={() => setVariantForms((v) => ({ ...v, [p.id]: null }))}
-                            className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] bg-white hover:border-[#8B8680]"
-                          >
-                            Annulla
-                          </button>
-                          <button
-                            onClick={() => saveVariant(p.id)}
-                            className="text-sm bg-[#2C2826] text-white px-5 py-2 hover:bg-[#3C3835]"
-                          >
-                            Salva variante
-                          </button>
-                        </div>
-                      </div>
+
+                    {/* Add new variant form (only when _editId is undefined) */}
+                    {variantForms[p.id] && !variantForms[p.id]?._editId && (
+                      <VariantForm
+                        vf={variantForms[p.id]!}
+                        onChange={(vf) => setVariantForms((prev) => ({ ...prev, [p.id]: vf }))}
+                        onSave={() => saveVariant(p.id)}
+                        onCancel={() => setVariantForms((prev) => ({ ...prev, [p.id]: null }))}
+                        inputCls={inputCls}
+                        isEdit={false}
+                      />
                     )}
                   </div>
                 </div>
@@ -409,6 +440,71 @@ export default function ProductsPage() {
                 <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Galleria immagini (URL separati da virgola)</label>
                 <input value={form.images} onChange={(e) => setForm((f) => ({ ...f, images: e.target.value }))} className={inputCls} placeholder="https://..., https://..." />
               </div>
+
+              {/* Purchase quantity options */}
+              <div className="border-t border-[#E8E3DC] pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em]">Opzioni quantità acquisto</label>
+                  <button
+                    type="button"
+                    onClick={addPurchaseOption}
+                    className="text-xs text-[#7C6B8A] hover:underline flex items-center gap-1"
+                  >
+                    <Plus size={12} /> Aggiungi opzione
+                  </button>
+                </div>
+                <p className="text-xs text-[#C5BEB8] mb-3">
+                  Definisci quantità fisse acquistabili (es. 1 candela, box da 3) con eventuale sconto percentuale.
+                  Lasciare vuoto per acquisto libero.
+                </p>
+                {(form.purchaseQuantities as PurchaseOption[]).length === 0 ? (
+                  <p className="text-xs text-[#C5BEB8] italic">Nessuna opzione — acquisto libero</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(form.purchaseQuantities as PurchaseOption[]).map((opt, idx) => (
+                      <div key={idx} className="grid grid-cols-[80px_1fr_100px_32px] gap-2 items-center bg-[#FAF8F5] p-3">
+                        <div>
+                          <label className="text-xs text-[#8B8680] block mb-1">Quantità</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={opt.qty}
+                            onChange={(e) => updatePurchaseOption(idx, "qty", e.target.value)}
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-[#8B8680] block mb-1">Etichetta</label>
+                          <input
+                            value={opt.label}
+                            onChange={(e) => updatePurchaseOption(idx, "label", e.target.value)}
+                            placeholder="es. Box da 3"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-[#8B8680] block mb-1">Sconto %</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={opt.discount}
+                            onChange={(e) => updatePurchaseOption(idx, "discount", e.target.value)}
+                            className={inputCls}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removePurchaseOption(idx)}
+                          className="text-red-400 hover:text-red-600 mt-5"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3 px-8 py-5 border-t border-[#E8E3DC]">
               <button onClick={() => setShowForm(false)} className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] hover:border-[#8B8680]">
@@ -426,5 +522,78 @@ export default function ProductsPage() {
         </div>
       )}
     </AdminLayout>
+  );
+}
+
+// Extracted variant form component to avoid repetition
+function VariantForm({
+  vf, onChange, onSave, onCancel, inputCls, isEdit,
+}: {
+  vf: { color: string; colorHex: string; aroma: string; stock: string; imageUrl: string; _editId?: number };
+  onChange: (vf: any) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  inputCls: string;
+  isEdit: boolean;
+}) {
+  return (
+    <div className="bg-[#F0EBE3] p-4 space-y-3">
+      <p className="text-xs text-[#8B8680] uppercase tracking-[0.15em]">{isEdit ? "Modifica variante" : "Nuova variante"}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <input
+          placeholder="Colore (es. Grigio cemento)"
+          value={vf.color}
+          onChange={(e) => onChange({ ...vf, color: e.target.value })}
+          className={inputCls}
+        />
+        <div className="flex gap-2">
+          <input
+            type="color"
+            value={vf.colorHex}
+            onChange={(e) => onChange({ ...vf, colorHex: e.target.value })}
+            className="h-10 w-12 border border-[#E8E3DC] cursor-pointer p-1"
+          />
+          <input
+            placeholder="HEX"
+            value={vf.colorHex}
+            onChange={(e) => onChange({ ...vf, colorHex: e.target.value })}
+            className={`${inputCls} flex-1`}
+          />
+        </div>
+        <input
+          placeholder="Aroma (es. Vaniglia)"
+          value={vf.aroma}
+          onChange={(e) => onChange({ ...vf, aroma: e.target.value })}
+          className={inputCls}
+        />
+        <input
+          type="number"
+          placeholder="Stock"
+          value={vf.stock}
+          onChange={(e) => onChange({ ...vf, stock: e.target.value })}
+          className={inputCls}
+        />
+        <input
+          placeholder="Immagine URL (opzionale)"
+          value={vf.imageUrl}
+          onChange={(e) => onChange({ ...vf, imageUrl: e.target.value })}
+          className={`${inputCls} col-span-2`}
+        />
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button
+          onClick={onCancel}
+          className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] bg-white hover:border-[#8B8680]"
+        >
+          Annulla
+        </button>
+        <button
+          onClick={onSave}
+          className="text-sm bg-[#2C2826] text-white px-5 py-2 hover:bg-[#3C3835] flex items-center gap-2"
+        >
+          <Check size={14} /> {isEdit ? "Aggiorna variante" : "Salva variante"}
+        </button>
+      </div>
+    </div>
   );
 }

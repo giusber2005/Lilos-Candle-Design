@@ -10,6 +10,7 @@ import {
 } from "../db/schema/index.js";
 import { eq, desc } from "drizzle-orm";
 import Stripe from "stripe";
+import { sendOrderConfirmationEmail } from "../lib/email.js";
 
 const router: IRouter = Router();
 
@@ -249,6 +250,17 @@ router.post("/", async (req, res) => {
         .where(eq(ordersTable.id, order.id));
       (order as any).githubIssueNumber = issueNumber;
     }
+
+    sendOrderConfirmationEmail({
+      orderNumber: order.orderNumber,
+      customerEmail: order.customerEmail,
+      totalAmount: order.totalAmount,
+      shippingAmount: order.shippingAmount,
+      shippingMethod: order.shippingMethod,
+      paymentMethod: order.paymentMethod,
+      shippingAddress: order.shippingAddress,
+      items: flatItems,
+    }).catch((err) => console.error("Email order confirmation error:", err));
 
     res.status(201).json(await buildOrderResponse(order));
   } catch (err) {

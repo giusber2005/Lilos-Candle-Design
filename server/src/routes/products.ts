@@ -9,6 +9,10 @@ function parseImages(raw: string | null | undefined): string[] {
   try { return JSON.parse(raw ?? "[]"); } catch { return []; }
 }
 
+function parsePurchaseQuantities(raw: string | null | undefined): Array<{ qty: number; label: string; discount: number }> {
+  try { return JSON.parse(raw ?? "[]"); } catch { return []; }
+}
+
 function formatProduct(product: any, variants: any[]) {
   return {
     id: product.id,
@@ -25,6 +29,7 @@ function formatProduct(product: any, variants: any[]) {
     weight: product.weight,
     dimensions: product.dimensions,
     featured: product.featured,
+    purchaseQuantities: parsePurchaseQuantities(product.purchaseQuantities),
     variants: variants.map((v) => ({
       id: v.id,
       productId: v.productId,
