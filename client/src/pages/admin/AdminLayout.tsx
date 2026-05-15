@@ -8,7 +8,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  Upload,
   MessageSquare,
   Mail,
 } from "lucide-react";
@@ -21,7 +20,6 @@ const navItems = [
   { href: "/admin/comments", label: "Commenti", icon: MessageSquare },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/settings", label: "Impostazioni", icon: Settings },
-  { href: "/admin/deploy", label: "Pubblica", icon: Upload },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

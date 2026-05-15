@@ -12,6 +12,12 @@ interface Variant {
   stock: number;
 }
 
+interface PurchaseOption {
+  qty: number;
+  label: string;
+  discount: number;
+}
+
 interface Product {
   id: number;
   name: string;
@@ -28,6 +34,7 @@ interface Product {
   dimensions: string;
   variants: Variant[];
   featured: boolean;
+  purchaseQuantities: PurchaseOption[];
 }
 
 function CandleSVG({ color = "#7C6B8A", large = false }: { color?: string; large?: boolean }) {
@@ -61,6 +68,7 @@ export default function ProductDetailPage() {
   const [notFound, setNotFound] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedOption, setSelectedOption] = useState<PurchaseOption | null>(null);
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [zoom, setZoom] = useState(false);
@@ -78,12 +86,15 @@ export default function ProductDetailPage() {
           setProduct(p);
           setSelectedImage(p.imageUrl);
           if (p.variants.length > 0) setSelectedVariant(p.variants[0]);
+          if (p.purchaseQuantities?.length > 0) setSelectedOption(p.purchaseQuantities[0]);
           document.title = `${p.name} – LilosCandle`;
         }
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  const effectiveQty = selectedOption ? selectedOption.qty : quantity;
 
   const handleAddToCart = async () => {
     if (!product || !selectedVariant) return;
@@ -96,7 +107,7 @@ export default function ProductDetailPage() {
           sessionId,
           productId: product.id,
           variantId: selectedVariant.id,
-          quantity,
+          quantity: effectiveQty,
         }),
       });
       if (!r.ok) throw new Error("Errore nell'aggiunta al carrello.");
@@ -135,11 +146,17 @@ export default function ProductDetailPage() {
     ? colorMap[selectedVariant.color] || selectedVariant.colorHex || "#7C6B8A"
     : "#7C6B8A";
 
+  const hasPurchaseOptions = product.purchaseQuantities?.length > 0;
+  const basePrice = product.price;
+  const discountedUnitPrice = selectedOption && selectedOption.discount > 0
+    ? basePrice * (1 - selectedOption.discount / 100)
+    : basePrice;
+  const totalPrice = discountedUnitPrice * effectiveQty;
+
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       <div className="pt-24 pb-20 px-6">
         <div className="max-w-6xl mx-auto">
-          {/* Back */}
           <Link href="/products">
             <button className="flex items-center gap-2 text-sm text-[#8B8680] hover:text-[#2C2826] transition-colors mb-12 group">
               <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -148,7 +165,6 @@ export default function ProductDetailPage() {
           </Link>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
-            {/* Images */}
             <div>
               <div
                 className="bg-[#F0EBE3] aspect-square flex items-center justify-center relative group cursor-zoom-in overflow-hidden"
@@ -169,7 +185,6 @@ export default function ProductDetailPage() {
                   <ZoomIn size={18} className="text-[#8B8680]" />
                 </div>
               </div>
-              {/* Thumbnails */}
               {(() => {
                 const all = [product.imageUrl, ...product.images].filter(Boolean) as string[];
                 if (all.length === 0) return null;
@@ -191,20 +206,42 @@ export default function ProductDetailPage() {
               })()}
             </div>
 
-            {/* Info */}
             <div className="flex flex-col">
               <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-3">
                 Candela artigianale · Cemento
               </p>
               <h1 className="font-serif text-4xl md:text-5xl text-[#2C2826] mb-4">{product.name}</h1>
+
               <div className="flex items-baseline gap-3 mb-8">
-                <span className="font-serif text-3xl text-[#2C2826]">
-                  € {product.price.toFixed(2).replace(".", ",")}
-                </span>
+                {hasPurchaseOptions ? (
+                  <>
+                    {selectedOption && selectedOption.discount > 0 ? (
+                      <>
+                        <span className="font-serif text-3xl text-[#2C2826]">
+                          € {totalPrice.toFixed(2).replace(".", ",")}
+                        </span>
+                        <span className="text-lg text-[#C5BEB8] line-through">
+                          € {(basePrice * effectiveQty).toFixed(2).replace(".", ",")}
+                        </span>
+                        <span className="text-xs bg-[#7C6B8A] text-white px-2 py-0.5">
+                          -{selectedOption.discount}%
+                        </span>
+                      </>
+                    ) : (
+                      <span className="font-serif text-3xl text-[#2C2826]">
+                        € {totalPrice.toFixed(2).replace(".", ",")}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="font-serif text-3xl text-[#2C2826]">
+                    € {basePrice.toFixed(2).replace(".", ",")}
+                  </span>
+                )}
               </div>
+
               <p className="text-[#6B6560] leading-relaxed mb-10 font-light">{product.description}</p>
 
-              {/* Variant selector */}
               {product.variants.length > 0 && (
                 <div className="mb-8">
                   <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">
@@ -223,10 +260,7 @@ export default function ProductDetailPage() {
                               : "border-[#E8E3DC] hover:border-[#8B8680]"
                           }`}
                         >
-                          <span
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: c }}
-                          />
+                          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: c }} />
                           {v.color} · {v.aroma}
                         </button>
                       );
@@ -235,29 +269,60 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Quantity */}
-              <div className="mb-8">
-                <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">Quantità</p>
-                <div className="flex items-center gap-0 border border-[#E8E3DC] w-fit">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-[#F0EBE3] transition-colors"
-                  >
-                    <Minus size={14} />
-                  </button>
-                  <span className="w-12 h-11 flex items-center justify-center font-medium text-sm border-x border-[#E8E3DC]">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-[#F0EBE3] transition-colors"
-                  >
-                    <Plus size={14} />
-                  </button>
+              {hasPurchaseOptions ? (
+                <div className="mb-8">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">Quantità</p>
+                  <div className="flex flex-wrap gap-3">
+                    {product.purchaseQuantities.map((opt) => {
+                      const isSelected = selectedOption?.qty === opt.qty && selectedOption?.label === opt.label;
+                      const optTotal = opt.discount > 0
+                        ? basePrice * opt.qty * (1 - opt.discount / 100)
+                        : basePrice * opt.qty;
+                      return (
+                        <button
+                          key={`${opt.qty}-${opt.label}`}
+                          onClick={() => setSelectedOption(opt)}
+                          className={`flex flex-col items-start px-5 py-3 border text-sm transition-all ${
+                            isSelected
+                              ? "border-[#2C2826] bg-[#F0EBE3]"
+                              : "border-[#E8E3DC] hover:border-[#8B8680]"
+                          }`}
+                        >
+                          <span className="font-medium text-[#2C2826]">{opt.label || `× ${opt.qty}`}</span>
+                          <span className="text-xs text-[#8B8680] mt-0.5">
+                            € {optTotal.toFixed(2).replace(".", ",")}
+                            {opt.discount > 0 && (
+                              <span className="ml-2 text-[#7C6B8A] font-medium">-{opt.discount}%</span>
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="mb-8">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">Quantità</p>
+                  <div className="flex items-center gap-0 border border-[#E8E3DC] w-fit">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-11 h-11 flex items-center justify-center hover:bg-[#F0EBE3] transition-colors"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-12 h-11 flex items-center justify-center font-medium text-sm border-x border-[#E8E3DC]">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-11 h-11 flex items-center justify-center hover:bg-[#F0EBE3] transition-colors"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
-              {/* CTA */}
               <button
                 onClick={handleAddToCart}
                 disabled={adding || !selectedVariant}
@@ -279,7 +344,6 @@ export default function ProductDetailPage() {
                 </Link>
               </div>
 
-              {/* Specs */}
               <div className="mt-12 border-t border-[#E8E3DC] pt-8">
                 <h3 className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-5">Specifiche</h3>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-4">
@@ -301,7 +365,6 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
-      {/* Zoom overlay */}
       {zoom && (
         <div
           className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center cursor-zoom-out p-8"

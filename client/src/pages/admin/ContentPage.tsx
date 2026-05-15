@@ -213,6 +213,7 @@ export default function ContentPage() {
             return (
               <div key={section} className="bg-white border border-[#E8E3DC]">
                 <button
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => toggleSection(section)}
                   className="w-full flex items-center justify-between p-5 hover:bg-[#FAFAF8] transition-colors text-left"
                 >

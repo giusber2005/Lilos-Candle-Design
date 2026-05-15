@@ -23,7 +23,6 @@ import AdminProductsPage from "@/pages/admin/ProductsPage";
 import AdminContentPage from "@/pages/admin/ContentPage";
 import AdminCommentsPage from "@/pages/admin/CommentsPage";
 import AdminSettingsPage from "@/pages/admin/SettingsPage";
-import AdminDeployPage from "@/pages/admin/DeployPage";
 import AdminNewsletterPage from "@/pages/admin/NewsletterPage";
 
 const queryClient = new QueryClient();
@@ -58,9 +57,6 @@ function AdminRouter() {
       </Route>
       <Route path="/admin/settings">
         <ProtectedAdmin component={AdminSettingsPage} />
-      </Route>
-      <Route path="/admin/deploy">
-        <ProtectedAdmin component={AdminDeployPage} />
       </Route>
       <Route component={NotFound} />
     </Switch>

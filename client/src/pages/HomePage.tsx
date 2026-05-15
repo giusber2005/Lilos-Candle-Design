@@ -7,25 +7,6 @@ import { useContent, useJsonContent } from "@/lib/content-context";
 type Review = { name: string; text: string; rating: number };
 type UserComment = { id: number; name: string; message: string; rating: number; createdAt: string };
 
-function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "large" | "small"; color?: string }) {
-  const w = size === "large" ? 200 : 120;
-  const h = size === "large" ? 220 : 132;
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width={w} height={h} rx="4" fill="url(#cement)" />
-      <rect x="16" y="16" width={w - 32} height={h * 0.35} rx="2" fill={color} fillOpacity="0.85" />
-      <defs>
-        <linearGradient id="cement" x1="0" y1="0" x2={w} y2={h} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#C5BEB8" />
-          <stop offset="40%" stopColor="#D8D2CB" />
-          <stop offset="70%" stopColor="#BDB6AE" />
-          <stop offset="100%" stopColor="#A89E96" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
 const defaultProcessSteps = [
   { n: "01", title: "Il vaso", desc: "Modellato in cemento puro, con texture naturale." },
   { n: "02", title: "La cera", desc: "Cera di alta qualità, colorata a mano." },
@@ -64,12 +45,8 @@ export default function HomePage() {
         if (!r.ok) throw new Error("Unable to load comments");
         return r.json();
       })
-      .then((rows: UserComment[]) => {
-        setUserComments(rows);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+      .then((rows: UserComment[]) => setUserComments(rows))
+      .catch(() => {});
   }, []);
 
   const [email, setEmail] = useState("");
@@ -105,15 +82,12 @@ export default function HomePage() {
 
   const handleEmailVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    const email = commentEmail.trim();
-    if (!email) {
-      setCommentEmailError("Inserisci la tua email.");
-      return;
-    }
+    const em = commentEmail.trim();
+    if (!em) { setCommentEmailError("Inserisci la tua email."); return; }
     setCommentEmailChecking(true);
     setCommentEmailError("");
     try {
-      const res = await fetch(`/api/comments/check-purchase?email=${encodeURIComponent(email)}`);
+      const res = await fetch(`/api/comments/check-purchase?email=${encodeURIComponent(em)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Errore di verifica.");
       if (!data.hasPurchased) {
@@ -131,30 +105,19 @@ export default function HomePage() {
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const message = commentMessage.trim();
-    if (!message) {
-      setCommentStatus({ type: "error", message: "Scrivi un commento prima di inviare." });
-      return;
-    }
-
+    if (!message) { setCommentStatus({ type: "error", message: "Scrivi un commento prima di inviare." }); return; }
     setCommentSubmitting(true);
     setCommentStatus({ type: "idle", message: "" });
     try {
       const response = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: commentEmail.trim(),
-          name: commentName.trim(),
-          message,
-          rating: commentRating,
-        }),
+        body: JSON.stringify({ email: commentEmail.trim(), name: commentName.trim(), message, rating: commentRating }),
       });
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
-        const errorMessage = typeof errorBody?.error === "string" ? errorBody.error : "Impossibile inviare il commento.";
-        throw new Error(errorMessage);
+        throw new Error(typeof errorBody?.error === "string" ? errorBody.error : "Impossibile inviare il commento.");
       }
-
       const createdComment = (await response.json()) as UserComment;
       setUserComments((prev) => [createdComment, ...prev].slice(0, 20));
       setCommentMessage("");
@@ -162,25 +125,22 @@ export default function HomePage() {
       setCommentRating(5);
       setCommentStatus({ type: "success", message: "Commento inviato con successo." });
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Errore durante l'invio del commento.";
-      setCommentStatus({ type: "error", message });
+      setCommentStatus({ type: "error", message: err instanceof Error ? err.message : "Errore durante l'invio del commento." });
     } finally {
       setCommentSubmitting(false);
     }
   };
 
   const allReviews: Review[] = [
-    ...userComments.map((comment) => ({
-      name: comment.name,
-      text: comment.message,
-      rating: comment.rating,
-    })),
+    ...userComments.map((comment) => ({ name: comment.name, text: comment.message, rating: comment.rating })),
     ...reviews,
   ];
 
+  const brandImage1 = c["brand_image_1"];
+  const brandImage2 = c["brand_image_2"];
+
   return (
     <div>
-      {/* Hero */}
       <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
         <div
           className="absolute inset-0"
@@ -222,7 +182,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Product teaser */}
       <section className="py-28 px-6 bg-[#FAF8F5]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20 reveal">
@@ -245,9 +204,7 @@ export default function HomePage() {
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
-                      <div className="transform group-hover:scale-105 transition-transform duration-700">
-                        <CandlePlaceholder size={i === 0 ? "large" : "small"} />
-                      </div>
+                      <div className="w-full h-full bg-[#E8E3DC]" />
                     )}
                   </div>
                   <div className="pt-6 pb-2 flex items-end justify-between">
@@ -272,7 +229,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Brand story */}
       <section className="py-28 px-6 bg-[#2C2826]">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div className="reveal">
@@ -296,17 +252,20 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="reveal reveal-delay-2 grid grid-cols-2 gap-4">
-            <div className="bg-[#3C3835] aspect-square flex items-center justify-center">
-              <CandlePlaceholder size="large" />
+            <div className="aspect-square overflow-hidden bg-[#3C3835]">
+              {brandImage1
+                ? <img src={brandImage1} alt="Brand" className="w-full h-full object-cover" />
+                : <div className="w-full h-full" />}
             </div>
-            <div className="bg-[#3C3835] aspect-square flex items-center justify-center mt-8">
-              <CandlePlaceholder size="small" />
+            <div className="aspect-square overflow-hidden bg-[#3C3835] mt-8">
+              {brandImage2
+                ? <img src={brandImage2} alt="Brand" className="w-full h-full object-cover" />
+                : <div className="w-full h-full" />}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Process teaser */}
       <section className="py-28 px-6 bg-[#F0EBE3]">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4 reveal">
@@ -335,7 +294,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Reviews */}
       <section className="py-28 px-6 bg-[#FAF8F5]">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 reveal">
@@ -447,7 +405,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter */}
       <section id="newsletter" className="py-28 px-6 bg-[#2C2826]">
         <div className="max-w-2xl mx-auto text-center reveal">
           <p className="text-xs uppercase tracking-[0.3em] text-[#8B8680] mb-4">
