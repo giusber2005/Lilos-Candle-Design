@@ -4,7 +4,6 @@ import { ArrowRight, Star, ChevronDown } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useContent, useJsonContent } from "@/lib/content-context";
 
-type Review = { name: string; text: string; rating: number };
 type UserComment = { id: number; name: string; message: string; rating: number; createdAt: string };
 
 const defaultProcessSteps = [
@@ -14,18 +13,29 @@ const defaultProcessSteps = [
   { n: "04", title: "La cura", desc: "Ogni pezzo è rifinito singolarmente." },
 ];
 
-const defaultReviews: Review[] = [
-  { name: "Giulia M.", text: "Semplicemente bellissima. L'aroma di amarena è delicato e avvolgente. Il design in cemento è unico nel suo genere.", rating: 5 },
-  { name: "Marco T.", text: "Ho regalato la Big Boy ad una amica — era entusiasta. La qualità è eccezionale, si vede che è fatta con cura.", rating: 5 },
-  { name: "Sofia R.", text: "La Lil One è perfetta per la mia scrivania. Piccola ma intensa. Tornerò sicuramente ad acquistare.", rating: 5 },
-];
+function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "large" | "small"; color?: string }) {
+  const w = size === "large" ? 200 : 120;
+  const h = size === "large" ? 220 : 132;
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width={w} height={h} rx="4" fill="url(#cement)" />
+      <rect x="16" y="16" width={w - 32} height={h * 0.35} rx="2" fill={color} fillOpacity="0.85" />
+      <defs>
+        <linearGradient id="cement" x1="0" y1="0" x2={w} y2={h} gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#C5BEB8" />
+          <stop offset="40%" stopColor="#D8D2CB" />
+          <stop offset="70%" stopColor="#BDB6AE" />
+          <stop offset="100%" stopColor="#A89E96" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 export default function HomePage() {
   useScrollReveal();
   const c = useContent();
   const processSteps = useJsonContent("process_steps", defaultProcessSteps);
-  const reviews = useJsonContent<Review>("reviews", defaultReviews);
-
   const [featuredProducts, setFeaturedProducts] = useState<{ id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean }[]>([]);
   const [userComments, setUserComments] = useState<UserComment[]>([]);
 
@@ -131,11 +141,6 @@ export default function HomePage() {
     }
   };
 
-  const allReviews: Review[] = [
-    ...userComments.map((comment) => ({ name: comment.name, text: comment.message, rating: comment.rating })),
-    ...reviews,
-  ];
-
   const brandImage1 = c["brand_image_1"];
   const brandImage2 = c["brand_image_2"];
 
@@ -204,7 +209,9 @@ export default function HomePage() {
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#E8E3DC]" />
+                      <div className="transform group-hover:scale-105 transition-transform duration-700">
+                        <CandlePlaceholder size={i === 0 ? "large" : "small"} />
+                      </div>
                     )}
                   </div>
                   <div className="pt-6 pb-2 flex items-end justify-between">
@@ -305,15 +312,15 @@ export default function HomePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {allReviews.map((r, i) => (
-              <div key={`${r.name}-${i}`} className={`reveal reveal-delay-${Math.min(i + 1, 6)} bg-[#F0EBE3] p-8`}>
+            {userComments.map((r, i) => (
+              <div key={r.id} className={`reveal reveal-delay-${Math.min(i + 1, 6)} bg-[#F0EBE3] p-8`}>
                 <div className="flex gap-1 mb-5">
                   {Array.from({ length: r.rating }).map((_, j) => (
                     <Star key={j} size={14} fill="#7C6B8A" stroke="none" />
                   ))}
                 </div>
                 <p className="text-[#2C2826] leading-relaxed mb-6 font-light italic font-serif">
-                  "{r.text}"
+                  "{r.message}"
                 </p>
                 <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">{r.name}</p>
               </div>
