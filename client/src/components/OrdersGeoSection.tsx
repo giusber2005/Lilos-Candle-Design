@@ -13,6 +13,14 @@ interface Props {
   orders: Order[];
 }
 
+interface LocationGroup {
+  lat: number;
+  lon: number;
+  region: string;
+  label: string;
+  orderNumbers: string[];
+}
+
 function FlyToCenter({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
@@ -27,8 +35,8 @@ const BAR_COLORS = [
 ];
 
 export default function OrdersGeoSection({ orders }: Props) {
-  const { points, center, regionStats } = useMemo(() => {
-    const pts: OrderGeoPoint[] = [];
+  const { groups, allPoints, center, regionStats } = useMemo(() => {
+    const pts: (OrderGeoPoint & { orderNumber: string })[] = [];
     for (const o of orders) {
       const addr = o.shippingAddress;
       if (!addr) continue;
@@ -37,19 +45,34 @@ export default function OrdersGeoSection({ orders }: Props) {
         city: addr.city,
         country: addr.country,
       });
-      if (pt) pts.push(pt);
+      if (pt) pts.push({ ...pt, orderNumber: o.orderNumber });
+    }
+
+    // Group orders that share the same geocoded position (same CAP prefix → same lat/lon)
+    const groupMap: Record<string, LocationGroup> = {};
+    for (const p of pts) {
+      const key = `${p.lat.toFixed(4)},${p.lon.toFixed(4)}`;
+      if (!groupMap[key]) {
+        groupMap[key] = { lat: p.lat, lon: p.lon, region: p.region, label: p.label, orderNumbers: [] };
+      }
+      groupMap[key].orderNumbers.push(p.orderNumber);
     }
 
     const latLons: [number, number][] = pts.map((p) => [p.lat, p.lon]);
     const med = geometricMedian(latLons);
     const stats = buildRegionStats(pts);
 
-    return { points: pts, center: med as [number, number], regionStats: stats };
+    return {
+      groups: Object.values(groupMap),
+      allPoints: pts,
+      center: med as [number, number],
+      regionStats: stats,
+    };
   }, [orders]);
 
   if (orders.length === 0) return null;
 
-  const mappableCount = points.length;
+  const mappableCount = allPoints.length;
 
   return (
     <div className="mb-8 space-y-4 isolate">
@@ -65,7 +88,7 @@ export default function OrdersGeoSection({ orders }: Props) {
         <div className="bg-white border border-[#E8E3DC] overflow-hidden" style={{ height: 420 }}>
           {mappableCount === 0 ? (
             <div className="flex items-center justify-center h-full text-sm text-[#8B8680]">
-              Nessun ordine italiano localizzabile
+              Nessun ordine localizzabile
             </div>
           ) : (
             <MapContainer
@@ -79,26 +102,45 @@ export default function OrdersGeoSection({ orders }: Props) {
                 attribution='&copy; <a href="https://openstreetmap.org">OpenStreetMap</a>'
               />
               <FlyToCenter center={center} />
-              {/* Geometric median marker */}
+
+              {/* Geometric median — rendered first so order dots appear above it */}
               <CircleMarker
                 center={center}
                 radius={10}
-                pathOptions={{ color: "#2C2826", fillColor: "#2C2826", fillOpacity: 0.9, weight: 2 }}
+                pathOptions={{ color: "#2C2826", fillColor: "#2C2826", fillOpacity: 0.85, weight: 2 }}
               >
                 <Tooltip permanent direction="top" offset={[0, -12]}>
-                  <span className="text-xs">Centro ordini</span>
+                  <span style={{ fontSize: 11 }}>Centro ordini</span>
                 </Tooltip>
               </CircleMarker>
-              {/* Order dots */}
-              {points.map((p, i) => (
+
+              {/* One marker per unique location; radius scales with order count */}
+              {groups.map((g, i) => (
                 <CircleMarker
                   key={i}
-                  center={[p.lat, p.lon]}
-                  radius={7}
-                  pathOptions={{ color: "#7C6B8A", fillColor: "#7C6B8A", fillOpacity: 0.55, weight: 1.5 }}
+                  center={[g.lat, g.lon]}
+                  radius={7 + Math.min((g.orderNumbers.length - 1) * 3, 9)}
+                  pathOptions={{
+                    color: "#5C4A79",
+                    fillColor: "#7C6B8A",
+                    fillOpacity: 0.82,
+                    weight: 1.5,
+                  }}
                 >
-                  <Tooltip>
-                    <span className="text-xs">{p.label} — {p.region}</span>
+                  <Tooltip direction="top" offset={[0, -8]}>
+                    <div style={{ fontSize: 11, lineHeight: 1.55 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                        {g.label} — {g.region}
+                        {g.orderNumbers.length > 1 && (
+                          <span style={{ fontWeight: 400, color: "#8B8680" }}>
+                            {" "}({g.orderNumbers.length} ordini)
+                          </span>
+                        )}
+                      </div>
+                      {g.orderNumbers.map((n) => (
+                        <div key={n} style={{ color: "#5C4E6A" }}>#{n}</div>
+                      ))}
+                    </div>
                   </Tooltip>
                 </CircleMarker>
               ))}

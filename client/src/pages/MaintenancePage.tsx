@@ -25,7 +25,7 @@ export default function MaintenancePage() {
           height="68"
           viewBox="0 0 44 68"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)" }}
+          style={{ position: "absolute", top: 0, left: 6 }}
           aria-hidden="true"
         >
           <defs>
