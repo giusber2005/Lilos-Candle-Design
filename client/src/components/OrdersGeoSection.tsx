@@ -52,7 +52,7 @@ export default function OrdersGeoSection({ orders }: Props) {
   const mappableCount = points.length;
 
   return (
-    <div className="mb-8 space-y-4">
+    <div className="mb-8 space-y-4 isolate">
       <div className="flex items-center justify-between">
         <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Provenienza ordini</h2>
         <span className="text-xs text-[#C5BEB8]">
