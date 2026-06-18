@@ -43,6 +43,17 @@ function formatDate(d: Date | number | null | undefined): string {
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
+// ─── Site Status (public read) ────────────────────────────────────────────────
+
+router.get("/site-status", async (_req, res) => {
+  try {
+    const [row] = await db.select().from(adminSettingsTable).where(eq(adminSettingsTable.key, "site_shutdown"));
+    res.json({ shutdown: row?.value === "true" });
+  } catch {
+    res.json({ shutdown: false });
+  }
+});
+
 router.post("/login", async (req, res) => {
   const { password } = req.body;
   try {
@@ -67,6 +78,25 @@ router.post("/login", async (req, res) => {
 });
 
 router.use(requireAdmin);
+
+// ─── Site Status (protected write) ───────────────────────────────────────────
+
+router.post("/site-status", async (req, res) => {
+  try {
+    const { shutdown } = req.body;
+    const value = shutdown ? "true" : "false";
+    const [existing] = await db.select().from(adminSettingsTable).where(eq(adminSettingsTable.key, "site_shutdown"));
+    if (existing) {
+      await db.update(adminSettingsTable).set({ value, updatedAt: new Date() }).where(eq(adminSettingsTable.key, "site_shutdown"));
+    } else {
+      await db.insert(adminSettingsTable).values({ key: "site_shutdown", value });
+    }
+    res.json({ shutdown: shutdown === true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 

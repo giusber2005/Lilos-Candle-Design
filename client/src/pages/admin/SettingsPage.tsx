@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useAdminAuth, adminFetch } from "@/lib/admin-auth";
-import { KeyRound, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { KeyRound, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
 
 const DEFAULT_ORDER_SUBJECT = "Conferma ordine {{orderNumber}} — Lilo's Candle Design";
 const DEFAULT_ORDER_BODY = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#2C2826">
@@ -29,6 +29,36 @@ const DEFAULT_NL_BODY = `<div style="font-family:Georgia,serif;max-width:600px;m
 
 export default function SettingsPage() {
   const { token, logout } = useAdminAuth();
+
+  // Site shutdown
+  const [shutdown, setShutdown] = useState<boolean | null>(null);
+  const [shutdownLoading, setShutdownLoading] = useState(false);
+
+  useEffect(() => {
+    adminFetch("/api/admin/site-status", token)
+      .then((r) => r.json())
+      .then((d) => setShutdown(d.shutdown === true))
+      .catch(() => setShutdown(false));
+  }, [token]);
+
+  async function toggleShutdown() {
+    if (shutdown === null) return;
+    const next = !shutdown;
+    setShutdownLoading(true);
+    try {
+      const res = await adminFetch("/api/admin/site-status", token, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shutdown: next }),
+      });
+      const d = await res.json();
+      setShutdown(d.shutdown);
+    } catch {
+      // leave state unchanged on error
+    } finally {
+      setShutdownLoading(false);
+    }
+  }
 
   // Password change
   const [currentPassword, setCurrentPassword] = useState("");
@@ -144,6 +174,46 @@ export default function SettingsPage() {
       <h1 className="font-serif text-3xl text-[#2C2826] mb-8">Impostazioni</h1>
 
       <div className="max-w-2xl space-y-8">
+        {/* Emergency shutdown */}
+        <div className={`border p-6 ${shutdown ? "bg-red-50 border-red-200" : "bg-white border-[#E8E3DC]"}`}>
+          <div className="flex items-center gap-2 mb-4">
+            <ShieldAlert size={16} className={shutdown ? "text-red-500" : "text-[#8B8680]"} />
+            <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Modalità manutenzione</h2>
+          </div>
+          <p className="text-sm text-[#8B8680] mb-5 font-light leading-relaxed">
+            Quando attiva, i visitatori vedono una pagina di scuse al posto del sito. Il pannello admin rimane sempre accessibile.
+          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              {shutdown === null ? (
+                <span className="text-xs text-[#C5BEB8]">Caricamento...</span>
+              ) : shutdown ? (
+                <span className="text-sm font-medium text-red-600">Sito offline — i clienti vedono la pagina di manutenzione</span>
+              ) : (
+                <span className="text-sm text-[#8B8680]">Sito online</span>
+              )}
+            </div>
+            <button
+              onClick={toggleShutdown}
+              disabled={shutdownLoading || shutdown === null}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 disabled:opacity-50 ${
+                shutdown ? "bg-red-500" : "bg-[#E8E3DC]"
+              }`}
+              aria-label="Toggle manutenzione"
+            >
+              {shutdownLoading ? (
+                <Loader2 size={12} className="absolute left-1/2 -translate-x-1/2 animate-spin text-white" />
+              ) : (
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-200 ${
+                    shutdown ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Password */}
         <div className="bg-white border border-[#E8E3DC] p-6">
           <div className="flex items-center gap-2 mb-6">

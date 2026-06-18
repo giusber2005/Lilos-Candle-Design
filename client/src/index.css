@@ -222,6 +222,27 @@
   animation: brandWarmGlow 5.5s ease-in-out infinite;
 }
 
+/* ── Maintenance page candle ──────────────────────────────── */
+@keyframes maintenanceGlowPulse {
+  0%,100% {
+    filter: drop-shadow(0 0 8px rgba(255,175,40,.7))
+            drop-shadow(0 0 18px rgba(255,100,0,.4))
+            drop-shadow(0 0 35px rgba(255,80,0,.18));
+  }
+  50% {
+    filter: drop-shadow(0 0 14px rgba(255,210,60,.95))
+            drop-shadow(0 0 30px rgba(255,130,0,.6))
+            drop-shadow(0 0 55px rgba(255,80,0,.28));
+  }
+}
+
+.maintenance-candle-flame {
+  animation:
+    candleFlicker       2.8s ease-in-out infinite,
+    maintenanceGlowPulse 2.1s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+
 /* Product image placeholder */
 .product-placeholder {
   background: linear-gradient(145deg, #C5BEB8 0%, #E8E3DC 40%, #D4C9BE 70%, #B8AFA7 100%);

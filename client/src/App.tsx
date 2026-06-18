@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,6 +19,7 @@ import MyOrdersPage from "@/pages/MyOrdersPage";
 import AboutPage from "@/pages/AboutPage";
 import HowMadePage from "@/pages/HowMadePage";
 import NotFound from "@/pages/not-found";
+import MaintenancePage from "@/pages/MaintenancePage";
 import AdminLoginPage from "@/pages/admin/LoginPage";
 import AdminDashboardPage from "@/pages/admin/DashboardPage";
 import AdminOrdersPage from "@/pages/admin/OrdersPage";
@@ -94,9 +96,22 @@ function ShopRouter() {
 
 function Router() {
   const [location] = useLocation();
-  if (location.startsWith("/admin")) {
-    return <AdminRouter />;
+  const [shutdown, setShutdown] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/site-status")
+      .then((r) => r.json())
+      .then((d) => setShutdown(d.shutdown === true))
+      .catch(() => setShutdown(false));
+  }, []);
+
+  if (location.startsWith("/admin")) return <AdminRouter />;
+
+  // Brief dark hold while checking — avoids flash of shop then maintenance
+  if (shutdown === null) {
+    return <div className="min-h-screen bg-[#2C2826]" />;
   }
+  if (shutdown) return <MaintenancePage />;
   return <ShopRouter />;
 }
 
