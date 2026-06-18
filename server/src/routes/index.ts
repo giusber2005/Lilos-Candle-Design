@@ -7,6 +7,7 @@ import newsletterRouter from "./newsletter";
 import adminRouter from "./admin";
 import contentRouter from "./content";
 import commentsRouter from "./comments";
+import analyticsRouter from "./analytics";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/newsletter", newsletterRouter);
 router.use("/admin", adminRouter);
 router.use("/content", contentRouter);
 router.use("/comments", commentsRouter);
+router.use("/analytics", analyticsRouter);
 
 export default router;

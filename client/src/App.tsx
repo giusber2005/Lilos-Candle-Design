@@ -6,6 +6,8 @@ import { AdminAuthProvider, useAdminAuth } from "@/lib/admin-auth";
 import { ContentProvider } from "@/lib/content-context";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { usePageTracking } from "@/hooks/use-page-tracking";
+import AdminAnalyticsPage from "@/pages/admin/AnalyticsPage";
 import HomePage from "@/pages/HomePage";
 import ProductsPage from "@/pages/ProductsPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
@@ -58,12 +60,16 @@ function AdminRouter() {
       <Route path="/admin/settings">
         <ProtectedAdmin component={AdminSettingsPage} />
       </Route>
+      <Route path="/admin/analytics">
+        <ProtectedAdmin component={AdminAnalyticsPage} />
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );
 }
 
 function ShopRouter() {
+  usePageTracking();
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />

@@ -10,6 +10,7 @@ import {
   LogOut,
   MessageSquare,
   Mail,
+  BarChart2,
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/admin/content", label: "Contenuti", icon: FileText },
   { href: "/admin/comments", label: "Commenti", icon: MessageSquare },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+  { href: "/admin/analytics", label: "Analitiche", icon: BarChart2 },
   { href: "/admin/settings", label: "Impostazioni", icon: Settings },
 ];
 
