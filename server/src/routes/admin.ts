@@ -199,7 +199,7 @@ router.post("/products", async (req, res) => {
   try {
     const {
       name, slug, description, shortDescription, price, imageUrl, images,
-      size, material, burnTime, weight, dimensions, featured, purchaseQuantities,
+      size, material, burnTime, weight, dimensions, featured, soldOut, purchaseQuantities,
     } = req.body;
     const [product] = await db
       .insert(productsTable)
@@ -210,6 +210,7 @@ router.post("/products", async (req, res) => {
         images: JSON.stringify(Array.isArray(images) ? images : []),
         size, material, burnTime, weight, dimensions,
         featured: featured || false,
+        soldOut: soldOut || false,
         purchaseQuantities: JSON.stringify(Array.isArray(purchaseQuantities) ? purchaseQuantities : []),
       })
       .returning();
@@ -225,7 +226,7 @@ router.patch("/products/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const {
       name, slug, description, shortDescription, price, imageUrl, images,
-      size, material, burnTime, weight, dimensions, featured, purchaseQuantities,
+      size, material, burnTime, weight, dimensions, featured, soldOut, purchaseQuantities,
     } = req.body;
     const updates: Record<string, any> = {};
     if (name !== undefined) updates.name = name;
@@ -241,6 +242,7 @@ router.patch("/products/:id", async (req, res) => {
     if (weight !== undefined) updates.weight = weight;
     if (dimensions !== undefined) updates.dimensions = dimensions;
     if (featured !== undefined) updates.featured = featured;
+    if (soldOut !== undefined) updates.soldOut = soldOut;
     if (purchaseQuantities !== undefined) updates.purchaseQuantities = JSON.stringify(Array.isArray(purchaseQuantities) ? purchaseQuantities : []);
     const [product] = await db
       .update(productsTable)

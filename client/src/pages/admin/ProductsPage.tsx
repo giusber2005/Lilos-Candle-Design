@@ -34,6 +34,7 @@ interface Product {
   weight: string;
   dimensions: string;
   featured: boolean;
+  soldOut: boolean;
   purchaseQuantities: PurchaseOption[];
   variants: Variant[];
 }
@@ -43,6 +44,7 @@ const emptyProduct = {
   price: "", imageUrl: "", images: "",
   size: "", material: "", burnTime: "", weight: "", dimensions: "",
   featured: false,
+  soldOut: false,
   purchaseQuantities: [] as PurchaseOption[],
 };
 
@@ -88,6 +90,7 @@ export default function ProductsPage() {
       imageUrl: p.imageUrl || "", images: p.images.join(", "),
       size: p.size, material: p.material, burnTime: p.burnTime,
       weight: p.weight, dimensions: p.dimensions, featured: p.featured,
+      soldOut: p.soldOut,
       purchaseQuantities: p.purchaseQuantities ?? [],
     });
     setShowForm(true);
@@ -178,6 +181,14 @@ export default function ProductsPage() {
     load();
   };
 
+  const toggleSoldOut = async (p: Product) => {
+    await adminFetch(`/api/admin/products/${p.id}`, token, {
+      method: "PATCH",
+      body: JSON.stringify({ soldOut: !p.soldOut }),
+    });
+    load();
+  };
+
   // Purchase quantities helpers
   const addPurchaseOption = () => {
     setForm((f) => ({
@@ -246,11 +257,21 @@ export default function ProductsPage() {
                   {p.featured && (
                     <span className="text-xs bg-[#7C6B8A] text-white px-2 py-0.5 rounded">In evidenza</span>
                   )}
+                  {p.soldOut && (
+                    <span className="text-xs bg-[#8B8680] text-white px-2 py-0.5 rounded">Esaurito</span>
+                  )}
                   {p.purchaseQuantities?.length > 0 && (
                     <span className="text-xs bg-[#4A7C5B] text-white px-2 py-0.5 rounded">{p.purchaseQuantities.length} opzioni qtà</span>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleSoldOut(p)}
+                    className={`text-xs px-2 py-1 border transition-colors ${p.soldOut ? "border-[#8B8680] text-[#8B8680] hover:bg-[#8B8680] hover:text-white" : "border-[#E8E3DC] text-[#8B8680] hover:border-[#8B8680]"}`}
+                    title={p.soldOut ? "Segna come disponibile" : "Segna come esaurito"}
+                  >
+                    {p.soldOut ? "Disponibile" : "Esaurito"}
+                  </button>
                   <button onClick={() => openEdit(p)} className="text-[#8B8680] hover:text-[#2C2826] p-2">
                     <Pencil size={16} />
                   </button>
@@ -389,9 +410,15 @@ export default function ProductsPage() {
                   <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Prezzo (€) *</label>
                   <input type="number" step="0.01" value={form.price} onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))} className={inputCls} />
                 </div>
-                <div className="flex items-center gap-3 pt-5">
-                  <input type="checkbox" id="featured" checked={form.featured as boolean} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))} />
-                  <label htmlFor="featured" className="text-sm text-[#2C2826]">In evidenza nella homepage</label>
+                <div className="flex flex-col gap-3 pt-5">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="featured" checked={form.featured as boolean} onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))} />
+                    <label htmlFor="featured" className="text-sm text-[#2C2826]">In evidenza nella homepage</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="soldOut" checked={form.soldOut as boolean} onChange={(e) => setForm((f) => ({ ...f, soldOut: e.target.checked }))} />
+                    <label htmlFor="soldOut" className="text-sm text-[#2C2826]">Esaurito</label>
+                  </div>
                 </div>
               </div>
               <div>

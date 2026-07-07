@@ -17,6 +17,7 @@ interface Product {
   shortDescription: string;
   price: number;
   imageUrl: string | null;
+  soldOut: boolean;
   variants: Variant[];
 }
 
@@ -101,7 +102,12 @@ export default function ProductsPage() {
                 return (
                   <Link key={product.id} href={`/products/${product.slug}`}>
                     <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
-                      <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)]">
+                      <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)] relative">
+                        {product.soldOut && (
+                          <div className="absolute inset-0 bg-black/10 z-10 flex items-end justify-start p-4 pointer-events-none">
+                            <span className="text-xs uppercase tracking-[0.2em] bg-[#2C2826] text-[#C5BEB8] px-3 py-1.5">Esaurito</span>
+                          </div>
+                        )}
                         {product.imageUrl ? (
                           <img
                             src={product.imageUrl}

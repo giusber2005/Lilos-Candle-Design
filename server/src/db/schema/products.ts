@@ -17,6 +17,7 @@ export const productsTable = sqliteTable("products", {
   weight: text("weight").notNull(),
   dimensions: text("dimensions").notNull(),
   featured: integer("featured", { mode: "boolean" }).notNull().default(false),
+  soldOut: integer("sold_out", { mode: "boolean" }).notNull().default(false),
   // JSON: [{qty: number, label: string, discount: number}]
   purchaseQuantities: text("purchase_quantities").notNull().default("[]"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()).notNull(),

@@ -34,6 +34,7 @@ interface Product {
   dimensions: string;
   variants: Variant[];
   featured: boolean;
+  soldOut: boolean;
   purchaseQuantities: PurchaseOption[];
 }
 
@@ -323,26 +324,34 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <button
-                onClick={handleAddToCart}
-                disabled={adding || !selectedVariant}
-                className={`w-full py-4 text-sm uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-3 transition-all duration-300 ${
-                  added
-                    ? "bg-[#7C6B8A] text-white"
-                    : "bg-[#2C2826] text-white hover:bg-[#3C3835]"
-                } disabled:opacity-50`}
-              >
-                <ShoppingBag size={16} />
-                {adding ? "Aggiunta..." : added ? "Aggiunto al carrello ✓" : "Aggiungi al carrello"}
-              </button>
+              {product.soldOut ? (
+                <div className="w-full py-4 text-sm uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-3 bg-[#E8E3DC] text-[#8B8680] cursor-not-allowed">
+                  Esaurito
+                </div>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={adding || !selectedVariant}
+                  className={`w-full py-4 text-sm uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-3 transition-all duration-300 ${
+                    added
+                      ? "bg-[#7C6B8A] text-white"
+                      : "bg-[#2C2826] text-white hover:bg-[#3C3835]"
+                  } disabled:opacity-50`}
+                >
+                  <ShoppingBag size={16} />
+                  {adding ? "Aggiunta..." : added ? "Aggiunto al carrello ✓" : "Aggiungi al carrello"}
+                </button>
+              )}
 
-              <div className="mt-4 text-center">
-                <Link href="/cart">
-                  <button className="text-xs text-[#8B8680] underline hover:text-[#2C2826] transition-colors">
-                    Vai al carrello
-                  </button>
-                </Link>
-              </div>
+              {!product.soldOut && (
+                <div className="mt-4 text-center">
+                  <Link href="/cart">
+                    <button className="text-xs text-[#8B8680] underline hover:text-[#2C2826] transition-colors">
+                      Vai al carrello
+                    </button>
+                  </Link>
+                </div>
+              )}
 
               <div className="mt-12 border-t border-[#E8E3DC] pt-8">
                 <h3 className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-5">Specifiche</h3>

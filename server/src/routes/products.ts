@@ -29,6 +29,7 @@ function formatProduct(product: any, variants: any[]) {
     weight: product.weight,
     dimensions: product.dimensions,
     featured: product.featured,
+    soldOut: product.soldOut,
     purchaseQuantities: parsePurchaseQuantities(product.purchaseQuantities),
     variants: variants.map((v) => ({
       id: v.id,

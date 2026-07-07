@@ -36,13 +36,13 @@ export default function HomePage() {
   useScrollReveal();
   const c = useContent();
   const processSteps = useJsonContent("process_steps", defaultProcessSteps);
-  const [featuredProducts, setFeaturedProducts] = useState<{ id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean }[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<{ id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean; soldOut: boolean }[]>([]);
   const [userComments, setUserComments] = useState<UserComment[]>([]);
 
   useEffect(() => {
     fetch("/api/products")
       .then((r) => r.json())
-      .then((all: { id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean }[]) => {
+      .then((all: { id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean; soldOut: boolean }[]) => {
         const featured = all.filter((p) => p.featured);
         setFeaturedProducts((featured.length > 0 ? featured : all).slice(0, 2));
       })
@@ -201,7 +201,12 @@ export default function HomePage() {
             {featuredProducts.map((p, i) => (
               <Link key={p.slug} href={`/products/${p.slug}`}>
                 <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
-                  <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)]">
+                  <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)] relative">
+                    {p.soldOut && (
+                      <div className="absolute inset-0 bg-black/10 z-10 flex items-end justify-start p-4 pointer-events-none">
+                        <span className="text-xs uppercase tracking-[0.2em] bg-[#2C2826] text-[#C5BEB8] px-3 py-1.5">Esaurito</span>
+                      </div>
+                    )}
                     {p.imageUrl ? (
                       <img
                         src={p.imageUrl}
