@@ -70,7 +70,7 @@ export default function ProductsPage() {
     setLoading(true);
     adminFetch("/api/admin/products", token)
       .then((r) => r.json())
-      .then((data) => { setProducts(data); setLoading(false); })
+      .then((data) => { setProducts(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));
   };
 

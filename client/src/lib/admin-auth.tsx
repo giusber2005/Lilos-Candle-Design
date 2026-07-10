@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface AdminAuthContext {
   token: string | null;
@@ -13,6 +13,9 @@ const AdminAuthCtx = createContext<AdminAuthContext>({
   logout: () => {},
   isAuthenticated: false,
 });
+
+// module-level logout so adminFetch can call it on 401
+let _globalLogout: (() => void) | null = null;
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() =>
@@ -29,6 +32,8 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
   };
 
+  _globalLogout = logout;
+
   return (
     <AdminAuthCtx.Provider value={{ token, login, logout, isAuthenticated: !!token }}>
       {children}
@@ -40,8 +45,8 @@ export function useAdminAuth() {
   return useContext(AdminAuthCtx);
 }
 
-export function adminFetch(path: string, token: string | null, options?: RequestInit) {
-  return fetch(path, {
+export async function adminFetch(path: string, token: string | null, options?: RequestInit) {
+  const r = await fetch(path, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -49,4 +54,9 @@ export function adminFetch(path: string, token: string | null, options?: Request
       ...(options?.headers || {}),
     },
   });
+  if (r.status === 401) {
+    _globalLogout?.();
+    throw new Error("UNAUTHORIZED");
+  }
+  return r;
 }
