@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useContent, useJsonContent } from "@/lib/content-context";
+import { RandomImage } from "@/components/RandomImage";
 
 const defaultValues = [
   { title: "Artigianale", body: "Ogni candela è modellata e rifinita a mano. Nessuna produzione di massa, nessuna scorciatoia." },
@@ -61,19 +62,8 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="reveal reveal-delay-2">
-            <div className="bg-[#F0EBE3] aspect-square flex items-center justify-center rounded-2xl overflow-hidden">
-              <svg width="160" height="180" viewBox="0 0 160 180" fill="none">
-                <rect width="160" height="180" rx="3" fill="url(#aboutCement)" />
-                <rect x="13" y="13" width="134" height="58" rx="2" fill="#7C6B8A" fillOpacity="0.88" />
-                <defs>
-                  <linearGradient id="aboutCement" x1="0" y1="0" x2="160" y2="180" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="#C5BEB8" />
-                    <stop offset="40%" stopColor="#D8D2CB" />
-                    <stop offset="70%" stopColor="#BDB6AE" />
-                    <stop offset="100%" stopColor="#A89E96" />
-                  </linearGradient>
-                </defs>
-              </svg>
+            <div className="relative bg-[#F0EBE3] aspect-square rounded-2xl overflow-hidden">
+              <RandomImage alt="Candela artigianale LilosCandle" />
             </div>
           </div>
         </div>

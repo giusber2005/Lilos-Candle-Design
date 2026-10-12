@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowRight, Star, ChevronDown } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useContent, useJsonContent } from "@/lib/content-context";
+import { RandomImage } from "@/components/RandomImage";
 
 type UserComment = { id: number; name: string; message: string; rating: number; createdAt: string };
 
@@ -13,24 +14,6 @@ const defaultProcessSteps = [
   { n: "04", title: "La cura", desc: "Ogni pezzo è rifinito singolarmente." },
 ];
 
-function CandlePlaceholder({ size = "large", color = "#7C6B8A" }: { size?: "large" | "small"; color?: string }) {
-  const w = size === "large" ? 200 : 120;
-  const h = size === "large" ? 220 : 132;
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width={w} height={h} rx="4" fill="url(#cement)" />
-      <rect x="16" y="16" width={w - 32} height={h * 0.35} rx="2" fill={color} fillOpacity="0.85" />
-      <defs>
-        <linearGradient id="cement" x1="0" y1="0" x2={w} y2={h} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#C5BEB8" />
-          <stop offset="40%" stopColor="#D8D2CB" />
-          <stop offset="70%" stopColor="#BDB6AE" />
-          <stop offset="100%" stopColor="#A89E96" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 export default function HomePage() {
   useScrollReveal();
@@ -215,9 +198,7 @@ export default function HomePage() {
                         className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                       />
                     ) : (
-                      <div className="transform group-hover:scale-105 transition-transform duration-700">
-                        <CandlePlaceholder size={i === 0 ? "large" : "small"} />
-                      </div>
+                      <RandomImage alt={p.name} className="transform group-hover:scale-105 transition-transform duration-700" />
                     )}
                   </div>
                   <div className="pt-6 pb-2 flex items-end justify-between">

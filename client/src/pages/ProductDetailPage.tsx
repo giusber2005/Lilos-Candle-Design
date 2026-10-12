@@ -3,6 +3,7 @@ import { useParams, Link } from "wouter";
 import { Minus, Plus, ShoppingBag, ArrowLeft, ZoomIn } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { CandleSizeViewer } from "@/components/CandleSizeViewer";
+import { RandomImage } from "@/components/RandomImage";
 
 interface Variant {
   id: number;
@@ -39,24 +40,6 @@ interface Product {
   purchaseQuantities: PurchaseOption[];
 }
 
-function CandleSVG({ color = "#7C6B8A", large = false }: { color?: string; large?: boolean }) {
-  const w = large ? 320 : 200;
-  const h = large ? 360 : 224;
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width={w} height={h} rx="4" fill="url(#cDetail)" />
-      <rect x={w * 0.08} y={w * 0.08} width={w * 0.84} height={h * 0.32} rx="2" fill={color} fillOpacity="0.9" />
-      <defs>
-        <linearGradient id="cDetail" x1="0" y1="0" x2={w} y2={h} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#C5BEB8" />
-          <stop offset="30%" stopColor="#D8D2CB" />
-          <stop offset="60%" stopColor="#C2BBB3" />
-          <stop offset="100%" stopColor="#A89E96" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 const colorMap: Record<string, string> = {
   Viola: "#7C6B8A",
@@ -184,9 +167,7 @@ export default function ProductDetailPage() {
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                   />
                 ) : (
-                  <div className="transform group-hover:scale-105 transition-transform duration-700">
-                    <CandleSVG color={waxColor} large />
-                  </div>
+                  <RandomImage alt={product.name} className="transform group-hover:scale-105 transition-transform duration-700" />
                 )}
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
                   <ZoomIn size={18} className="text-[#8B8680]" />
@@ -393,7 +374,9 @@ export default function ProductDetailPage() {
               className="max-w-[90vw] max-h-[90vh] object-contain"
             />
           ) : (
-            <CandleSVG color={waxColor} large />
+            <div className="relative w-[min(90vw,660px)] max-h-[90vh] aspect-[3/4] rounded-2xl overflow-hidden">
+              <RandomImage alt={product.name} interval={0} />
+            </div>
           )}
         </div>
       )}

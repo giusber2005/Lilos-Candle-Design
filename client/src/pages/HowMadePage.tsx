@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { useContent, useJsonContent } from "@/lib/content-context";
+import { RandomImage } from "@/components/RandomImage";
 
 const defaultSteps = [
   { number: "01", title: "Il vaso in cemento", subtitle: "La forma", body: "Ogni vaso viene creato versando il cemento in uno stampo cubico fatto su misura. Una volta solidificato, il pezzo viene estratto dallo stampo e levigato a mano. La superficie mantiene una texture naturale e leggermente porosa — ogni vaso è unico.", detail: "Cemento naturale · Cura artigianale · Texture unica" },
@@ -61,24 +62,9 @@ export default function HowMadePage() {
                 <p className="text-[#6B6560] leading-relaxed font-light text-lg mb-6">{step.body}</p>
                 <p className="text-xs text-[#8B8680] uppercase tracking-[0.2em]">{step.detail}</p>
               </div>
-              <div className={`${i % 2 === 1 ? "md:order-1" : ""} bg-[#F0EBE3] aspect-square flex items-center justify-center`}>
-                <svg width="140" height="160" viewBox="0 0 140 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="140" height="160" rx="3" fill="url(#hmCement)" />
-                  {i >= 1 && (
-                    <rect x="11" y="11" width="118" height={48 - (steps.length - 1 - i) * 5}
-                      rx="2" fill="#7C6B8A" fillOpacity={0.4 + i * 0.1} />
-                  )}
-                  <text x="70" y="120" textAnchor="middle" fontFamily="serif" fontSize="40"
-                    fill="#8B8680" fillOpacity="0.4">{step.number}</text>
-                  <defs>
-                    <linearGradient id="hmCement" x1="0" y1="0" x2="140" y2="160" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="#C5BEB8" />
-                      <stop offset="40%" stopColor="#D8D2CB" />
-                      <stop offset="70%" stopColor="#C0B9B1" />
-                      <stop offset="100%" stopColor="#A89E96" />
-                    </linearGradient>
-                  </defs>
-                </svg>
+              <div className={`${i % 2 === 1 ? "md:order-1" : ""} relative bg-[#F0EBE3] aspect-square rounded-2xl overflow-hidden`}>
+                <RandomImage alt={step.title} />
+                <span className="absolute left-5 bottom-4 font-serif text-5xl text-white/80 drop-shadow">{step.number}</span>
               </div>
             </div>
           ))}

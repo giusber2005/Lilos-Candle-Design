@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
+import { RandomImage } from "@/components/RandomImage";
 
 interface Variant {
   id: number;
@@ -21,23 +22,6 @@ interface Product {
   variants: Variant[];
 }
 
-function CandleSVG({ color = "#7C6B8A", size = 280 }: { color?: string; size?: number }) {
-  const h = Math.round(size * 1.1);
-  return (
-    <svg width={size} height={h} viewBox={`0 0 ${size} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width={size} height={h} rx="3" fill="url(#cement2)" />
-      <rect x={size * 0.08} y={size * 0.08} width={size * 0.84} height={h * 0.32} rx="2" fill={color} fillOpacity="0.88" />
-      <defs>
-        <linearGradient id="cement2" x1="0" y1="0" x2={size} y2={h} gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#C5BEB8" />
-          <stop offset="40%" stopColor="#D8D2CB" />
-          <stop offset="70%" stopColor="#BDB6AE" />
-          <stop offset="100%" stopColor="#A89E96" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 export default function ProductsPage() {
   useScrollReveal();
@@ -97,9 +81,6 @@ export default function ProductsPage() {
               {products.map((product, i) => {
                 const variants = product.variants ?? [];
                 const firstVariant = variants[0];
-                const waxColor = firstVariant
-                  ? colorMap[firstVariant.color] || firstVariant.colorHex || "#7C6B8A"
-                  : "#7C6B8A";
                 return (
                   <Link key={product.id} href={`/products/${product.slug}`}>
                     <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
@@ -116,9 +97,7 @@ export default function ProductsPage() {
                             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                           />
                         ) : (
-                          <div className="transform group-hover:scale-105 transition-transform duration-700">
-                            <CandleSVG color={waxColor} />
-                          </div>
+                          <RandomImage alt={product.name} className="transform group-hover:scale-105 transition-transform duration-700" />
                         )}
                       </div>
                       <div className="pt-6 flex items-start justify-between">

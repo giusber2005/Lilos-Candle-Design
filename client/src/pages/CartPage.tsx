@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Trash2, Minus, Plus, ArrowRight, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { RandomImage } from "@/components/RandomImage";
 
 interface Variant {
   id: number;
@@ -14,6 +15,7 @@ interface Product {
   id: number;
   name: string;
   price: number;
+  imageUrl: string | null;
 }
 
 interface CartItem {
@@ -30,23 +32,7 @@ interface Cart {
   itemCount: number;
 }
 
-const colorMap: Record<string, string> = { Viola: "#7C6B8A", Purple: "#7C6B8A" };
 
-function CandleMini({ color = "#7C6B8A" }: { color?: string }) {
-  return (
-    <svg width={64} height={72} viewBox="0 0 64 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width={64} height={72} rx="2" fill="url(#cartCement)" />
-      <rect x={5} y={5} width={54} height={23} rx="1" fill={color} fillOpacity="0.88" />
-      <defs>
-        <linearGradient id="cartCement" x1="0" y1="0" x2="64" y2="72" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#C5BEB8" />
-          <stop offset="50%" stopColor="#D0C9C1" />
-          <stop offset="100%" stopColor="#A89E96" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
 
 export default function CartPage() {
   const { sessionId, refreshCount } = useCart();
@@ -133,11 +119,14 @@ export default function CartPage() {
               {/* Items */}
               <div className="lg:col-span-2 space-y-6">
                 {cart.items.map((item) => {
-                  const c = colorMap[item.variant.color] || item.variant.colorHex || "#7C6B8A";
                   return (
                     <div key={item.id} className="flex gap-6 pb-6 border-b border-[#E8E3DC]">
-                      <div className="bg-[#F0EBE3] flex items-center justify-center flex-shrink-0 rounded-xl overflow-hidden">
-                        <CandleMini color={c} />
+                      <div className="relative w-16 h-[72px] bg-[#F0EBE3] flex-shrink-0 rounded-xl overflow-hidden">
+                        {item.product.imageUrl ? (
+                          <img src={item.product.imageUrl} alt={item.product.name} className="absolute inset-0 w-full h-full object-cover" />
+                        ) : (
+                          <RandomImage alt={item.product.name} interval={0} />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-4">
