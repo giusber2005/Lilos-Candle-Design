@@ -90,7 +90,7 @@ export default function OrderConfirmationPage() {
           </div>
 
           {/* Order card */}
-          <div className="bg-[#F0EBE3] p-8 text-left mb-8">
+          <div className="bg-[#F0EBE3] p-8 text-left mb-8 rounded-2xl">
             <div className="flex items-center justify-between mb-6 pb-6 border-b border-[#E8E3DC]">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-1">Numero ordine</p>
@@ -98,7 +98,7 @@ export default function OrderConfirmationPage() {
               </div>
               <div className="text-right">
                 <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-1">Stato</p>
-                <span className="inline-block bg-[#7C6B8A] text-white text-xs px-3 py-1 uppercase tracking-[0.1em]">
+                <span className="inline-block bg-[#7C6B8A] text-white text-xs px-3 py-1 uppercase tracking-[0.1em] rounded-full">
                   {statusLabels[order.status] || order.status}
                 </span>
               </div>
@@ -135,7 +135,7 @@ export default function OrderConfirmationPage() {
           </div>
 
           {/* Shipping info */}
-          <div className="bg-white border border-[#E8E3DC] p-6 text-left mb-8 flex gap-4">
+          <div className="bg-white border border-[#E8E3DC] p-6 text-left mb-8 flex gap-4 rounded-2xl">
             <Package size={20} className="text-[#8B8680] flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-[#2C2826] mb-1">Indirizzo di consegna</p>
@@ -157,12 +157,12 @@ export default function OrderConfirmationPage() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/products">
-              <button className="bg-[#2C2826] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#3C3835] transition-colors">
+              <button className="bg-[#2C2826] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#3C3835] transition-colors rounded-xl">
                 Continua lo shopping
               </button>
             </Link>
             <Link href="/orders">
-              <button className="border border-[#2C2826] text-[#2C2826] px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#F0EBE3] transition-colors">
+              <button className="border border-[#2C2826] text-[#2C2826] px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#F0EBE3] transition-colors rounded-xl">
                 I miei ordini
               </button>
             </Link>

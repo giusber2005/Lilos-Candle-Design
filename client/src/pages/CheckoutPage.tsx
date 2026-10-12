@@ -67,7 +67,7 @@ function CheckoutInner() {
     document.title = "Checkout – LilosCandle";
     fetch(`/api/cart?sessionId=${sessionId}`)
       .then((r) => r.json())
-      .then(setCart)
+      .then((data) => setCart(Array.isArray(data?.items) ? data : null))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -240,7 +240,7 @@ function CheckoutInner() {
                     {shippingMethods.map((method) => (
                       <label
                         key={method.id}
-                        className={`flex items-center justify-between p-4 border cursor-pointer transition-all ${
+                        className={`flex items-center justify-between p-4 border cursor-pointer transition-all rounded-xl ${
                           shippingMethod === method.id ? "border-[#2C2826] bg-white" : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
                         }`}
                       >
@@ -272,7 +272,7 @@ function CheckoutInner() {
                     {paymentMethods.map((pm) => (
                       <label
                         key={pm.id}
-                        className={`flex items-center gap-3 p-4 border cursor-pointer transition-all ${
+                        className={`flex items-center gap-3 p-4 border cursor-pointer transition-all rounded-xl ${
                           paymentMethod === pm.id ? "border-[#2C2826] bg-white" : "border-[#E8E3DC] bg-white hover:border-[#8B8680]"
                         }`}
                       >
@@ -285,7 +285,7 @@ function CheckoutInner() {
 
                   {/* Card details */}
                   {paymentMethod === "card" && (
-                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4">
+                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 rounded-xl">
                       {stripePublishableKey ? (
                         <>
                           <p className="text-xs text-[#8B8680] mb-3 uppercase tracking-[0.15em]">Dati carta</p>
@@ -314,7 +314,7 @@ function CheckoutInner() {
 
                   {/* Bank transfer instructions */}
                   {paymentMethod === "bank_transfer" && (
-                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 space-y-2">
+                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 space-y-2 rounded-xl">
                       <p className="text-xs text-[#8B8680] uppercase tracking-[0.15em] mb-3">Istruzioni bonifico</p>
                       <p className="text-sm text-[#2C2826]">Dopo la conferma dell'ordine riceverai via email le coordinate bancarie per il pagamento.</p>
                       <p className="text-xs text-[#8B8680]">L'ordine verrà spedito entro 2 giorni lavorativi dalla ricezione del bonifico.</p>
@@ -323,7 +323,7 @@ function CheckoutInner() {
 
                   {/* Cash on delivery note */}
                   {paymentMethod === "cash_on_delivery" && (
-                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 space-y-2">
+                    <div className="mt-4 border border-[#E8E3DC] bg-white p-4 space-y-2 rounded-xl">
                       <p className="text-xs text-[#8B8680] uppercase tracking-[0.15em] mb-3">Pagamento alla consegna</p>
                       <p className="text-sm text-[#2C2826]">Paghi direttamente al corriere al momento della consegna. È richiesto il pagamento in contanti.</p>
                       <p className="text-xs text-[#8B8680]">Può essere applicato un supplemento contrassegno di € 3,00.</p>
@@ -331,7 +331,7 @@ function CheckoutInner() {
                   )}
 
                   {cardError && (
-                    <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">
+                    <div className="mt-3 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
                       {cardError}
                     </div>
                   )}
@@ -345,14 +345,14 @@ function CheckoutInner() {
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Istruzioni speciali per la consegna (opzionale)"
                     rows={3}
-                    className="w-full border border-[#E8E3DC] bg-white px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] transition-colors resize-none"
+                    className="w-full border border-[#E8E3DC] bg-white px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] transition-colors resize-none rounded-xl"
                   />
                 </div>
               </div>
 
               {/* Right: order summary */}
               <div className="lg:col-span-1">
-                <div className="bg-[#F0EBE3] p-8 sticky top-24">
+                <div className="bg-[#F0EBE3] p-8 sticky top-24 rounded-2xl">
                   <h2 className="font-serif text-xl text-[#2C2826] mb-6">Il tuo ordine</h2>
                   <div className="space-y-4 mb-6 pb-6 border-b border-[#E8E3DC]">
                     {cart.items.map((item) => (
@@ -387,7 +387,7 @@ function CheckoutInner() {
                   <button
                     type="submit"
                     disabled={submitting || (paymentMethod === "card" && !stripePublishableKey)}
-                    className="w-full bg-[#2C2826] text-white py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#2C2826] text-white py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
                   >
                     {submitting ? (
                       <span className="flex items-center gap-2">

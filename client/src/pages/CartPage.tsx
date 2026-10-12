@@ -63,7 +63,7 @@ export default function CartPage() {
     try {
       const r = await fetch(`/api/cart?sessionId=${sessionId}`);
       const data = await r.json();
-      setCart(data);
+      setCart(r.ok && Array.isArray(data?.items) ? data : null);
     } catch {}
     setLoading(false);
   };
@@ -123,7 +123,7 @@ export default function CartPage() {
                 Esplora le nostre candele e aggiungile al carrello.
               </p>
               <Link href="/products">
-                <button className="bg-[#2C2826] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#3C3835] transition-colors">
+                <button className="bg-[#2C2826] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#3C3835] transition-colors rounded-xl">
                   Vai allo shop
                 </button>
               </Link>
@@ -136,7 +136,7 @@ export default function CartPage() {
                   const c = colorMap[item.variant.color] || item.variant.colorHex || "#7C6B8A";
                   return (
                     <div key={item.id} className="flex gap-6 pb-6 border-b border-[#E8E3DC]">
-                      <div className="bg-[#F0EBE3] flex items-center justify-center flex-shrink-0">
+                      <div className="bg-[#F0EBE3] flex items-center justify-center flex-shrink-0 rounded-xl overflow-hidden">
                         <CandleMini color={c} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -152,7 +152,7 @@ export default function CartPage() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between mt-4">
-                          <div className="flex items-center border border-[#E8E3DC]">
+                          <div className="flex items-center border border-[#E8E3DC] rounded-xl overflow-hidden">
                             <button
                               onClick={() => updateQty(item.id, item.quantity - 1)}
                               className="w-9 h-9 flex items-center justify-center hover:bg-[#F0EBE3] transition-colors"
@@ -184,7 +184,7 @@ export default function CartPage() {
 
               {/* Summary */}
               <div className="lg:col-span-1">
-                <div className="bg-[#F0EBE3] p-8 sticky top-24">
+                <div className="bg-[#F0EBE3] p-8 sticky top-24 rounded-2xl">
                   <h2 className="font-serif text-xl text-[#2C2826] mb-6">Riepilogo ordine</h2>
                   <div className="space-y-3 text-sm mb-6 border-b border-[#E8E3DC] pb-6">
                     <div className="flex justify-between">
@@ -212,7 +212,7 @@ export default function CartPage() {
                     <span>€ {(cart.total + shipping).toFixed(2).replace(".", ",")}</span>
                   </div>
                   <Link href="/checkout">
-                    <button className="w-full bg-[#2C2826] text-white py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors flex items-center justify-center gap-3">
+                    <button className="w-full bg-[#2C2826] text-white py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors flex items-center justify-center gap-3 rounded-xl">
                       Procedi all'acquisto
                       <ArrowRight size={14} />
                     </button>

@@ -75,7 +75,7 @@ function JsonEditor({
         value={pretty}
         onChange={(e) => handleChange(e.target.value)}
         rows={12}
-        className="w-full border border-[#E8E3DC] px-4 py-3 text-xs text-[#2C2826] font-mono focus:outline-none focus:border-[#8B8680] resize-y bg-[#FAFAF8]"
+        className="w-full border border-[#E8E3DC] px-4 py-3 text-xs text-[#2C2826] font-mono focus:outline-none focus:border-[#8B8680] resize-y bg-[#FAFAF8] rounded-xl"
         spellCheck={false}
       />
       {error && (
@@ -114,7 +114,7 @@ function ContentField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             rows={3}
-            className="flex-1 border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] resize-y"
+            className="flex-1 border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] resize-y rounded-xl"
           />
         ) : (
           <input
@@ -122,19 +122,19 @@ function ContentField({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={row.type === "image" || row.type === "link" ? "https://..." : ""}
-            className="flex-1 border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680]"
+            className="flex-1 border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] rounded-xl"
           />
         )}
         <button
           onClick={onSave}
           disabled={saving}
-          className="flex-shrink-0 bg-[#2C2826] text-white px-4 py-3 text-sm hover:bg-[#3C3835] transition-colors disabled:opacity-50 flex items-center gap-2 mt-0"
+          className="flex-shrink-0 bg-[#2C2826] text-white px-4 py-3 text-sm hover:bg-[#3C3835] transition-colors disabled:opacity-50 flex items-center gap-2 mt-0 rounded-xl"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <Check size={14} /> : "Salva"}
         </button>
       </div>
       {row.type === "image" && value && (
-        <img src={value} alt={row.label} className="mt-2 h-20 object-cover border border-[#E8E3DC]" />
+        <img src={value} alt={row.label} className="mt-2 h-20 object-cover border border-[#E8E3DC] rounded-lg" />
       )}
     </div>
   );
@@ -187,7 +187,7 @@ export default function ContentPage() {
       <h1 className="font-serif text-3xl text-[#2C2826] mb-2">Contenuti del sito</h1>
       <p className="text-sm text-[#8B8680] mb-8">
         Modifica tutti i testi, le immagini e i link del sito. Le sezioni con icona{" "}
-        <span className="font-mono bg-[#F0EBE3] px-1">JSON</span> usano array — non modificare la struttura, solo i valori.
+        <span className="font-mono bg-[#F0EBE3] px-1 rounded">JSON</span> usano array — non modificare la struttura, solo i valori.
       </p>
 
       {loading ? (
@@ -195,11 +195,11 @@ export default function ContentPage() {
           <div className="w-6 h-6 border-2 border-[#2C2826] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="bg-white border border-[#E8E3DC] p-8 text-center">
+        <div className="bg-white border border-[#E8E3DC] p-8 text-center rounded-2xl">
           <p className="text-sm text-[#8B8680] mb-4">
             Nessun contenuto trovato. Esegui il seed del database.
           </p>
-          <p className="text-xs text-[#C5BEB8] font-mono bg-[#F0EBE3] inline-block px-3 py-2">
+          <p className="text-xs text-[#C5BEB8] font-mono bg-[#F0EBE3] inline-block px-3 py-2 rounded-xl">
             pnpm db:seed
           </p>
         </div>
@@ -211,7 +211,7 @@ export default function ContentPage() {
             const label = SECTION_LABELS[section] ?? section;
 
             return (
-              <div key={section} className="bg-white border border-[#E8E3DC]">
+              <div key={section} className="bg-white border border-[#E8E3DC] rounded-2xl overflow-hidden">
                 <button
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => toggleSection(section)}

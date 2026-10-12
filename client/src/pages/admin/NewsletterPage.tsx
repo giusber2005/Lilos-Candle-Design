@@ -108,7 +108,7 @@ export default function NewsletterPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
         {/* Subscribers list */}
-        <div className="bg-white border border-[#E8E3DC]">
+        <div className="bg-white border border-[#E8E3DC] rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#E8E3DC]">
             <div className="flex items-center gap-2">
               <Users size={16} className="text-[#8B8680]" />
@@ -167,7 +167,7 @@ export default function NewsletterPage() {
         </div>
 
         {/* Compose */}
-        <div className="bg-white border border-[#E8E3DC]">
+        <div className="bg-white border border-[#E8E3DC] rounded-2xl overflow-hidden">
           <div className="flex items-center gap-2 px-6 py-4 border-b border-[#E8E3DC]">
             <Send size={16} className="text-[#8B8680]" />
             <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Componi newsletter</h2>
@@ -186,7 +186,7 @@ export default function NewsletterPage() {
             <div>
               <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Corpo (HTML)</label>
               <p className="text-xs text-[#C5BEB8] mb-1">
-                Variabili: <code className="bg-[#F5F2EE] px-1">{"{{firstName}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{email}}"}</code>
+                Variabili: <code className="bg-[#F5F2EE] px-1 rounded">{"{{firstName}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{email}}"}</code>
               </p>
               <textarea
                 value={body}
@@ -207,7 +207,7 @@ export default function NewsletterPage() {
             <button
               onClick={handleSend}
               disabled={sending || subscribers.length === 0}
-              className="w-full bg-[#2C2826] text-white text-sm py-2.5 hover:bg-[#3C3835] disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full bg-[#2C2826] text-white text-sm py-2.5 hover:bg-[#3C3835] disabled:opacity-50 flex items-center justify-center gap-2 rounded-xl"
             >
               {sending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
               {sending ? "Invio in corso..." : `Invia a ${recipientCount} iscritti`}

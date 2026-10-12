@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import { useAdminAuth, adminFetch } from "@/lib/admin-auth";
-import { Eye, Users, TrendingUp, Calendar } from "lucide-react";
+import { Eye, Users, TrendingUp, Calendar, Monitor, Smartphone, Tablet, HelpCircle } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -12,9 +12,6 @@ import {
   BarChart,
   Bar,
   Cell,
-  PieChart,
-  Pie,
-  Legend,
 } from "recharts";
 
 interface Analytics {
@@ -30,18 +27,109 @@ interface Analytics {
   referrers: { referrer: string | null; count: number }[];
 }
 
-const DEVICE_COLORS: Record<string, string> = {
-  desktop: "#2C2826",
-  mobile: "#7C6B8A",
-  tablet: "#C5BEB8",
-  other: "#8B8680",
+// Muted brand hues; separation validated for color-blind readers. Every device
+// is also named + iconed, so identity never relies on color alone.
+const DEVICES: Record<string, { label: string; color: string; icon: React.ElementType }> = {
+  desktop: { label: "Desktop", color: "#6E5A8C", icon: Monitor },
+  mobile: { label: "Smartphone", color: "#C0874A", icon: Smartphone },
+  tablet: { label: "Tablet", color: "#4F8A7A", icon: Tablet },
+  other: { label: "Altro", color: "#8B8680", icon: HelpCircle },
 };
+const DEVICE_ORDER = ["desktop", "mobile", "tablet", "other"];
+
+function DeviceBreakdown({ devices }: { devices: Analytics["devices"] }) {
+  const [hovered, setHovered] = useState<string | null>(null);
+  // merge any unknown types into "other" and keep a fixed order so colors never shift
+  const merged = new Map<string, number>();
+  for (const d of devices) {
+    const key = DEVICES[d.type] ? d.type : "other";
+    merged.set(key, (merged.get(key) ?? 0) + d.count);
+  }
+  const total = [...merged.values()].reduce((a, b) => a + b, 0);
+  const rows = DEVICE_ORDER.filter((k) => merged.has(k)).map((k) => ({
+    key: k,
+    ...DEVICES[k],
+    count: merged.get(k)!,
+    pct: total > 0 ? (merged.get(k)! / total) * 100 : 0,
+  }));
+  const top = [...rows].sort((a, b) => b.count - a.count)[0];
+
+  return (
+    <div className="bg-white border border-[#E8E3DC] rounded-2xl p-6 flex flex-col">
+      <div className="flex items-start justify-between mb-6">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Dispositivi</p>
+        <p className="text-xs text-[#8B8680]">{total.toLocaleString("it-IT")} visite totali</p>
+      </div>
+
+      {top && (
+        <div className="mb-5">
+          <p className="font-serif text-4xl text-[#2C2826] leading-none">
+            {top.pct.toFixed(0)}<span className="text-xl text-[#8B8680]">%</span>
+          </p>
+          <p className="text-sm text-[#8B8680] mt-1">delle visite da {top.label.toLowerCase()}</p>
+        </div>
+      )}
+
+      {/* 100% stacked bar */}
+      <div className="flex h-3 w-full gap-[2px] mb-6" role="img" aria-label="Ripartizione visite per dispositivo">
+        {rows.map((r) => (
+          <div
+            key={r.key}
+            onMouseEnter={() => setHovered(r.key)}
+            onMouseLeave={() => setHovered(null)}
+            title={`${r.label}: ${r.count} visite (${r.pct.toFixed(1)}%)`}
+            className="h-full first:rounded-l-full last:rounded-r-full transition-opacity duration-200"
+            style={{
+              width: `${r.pct}%`,
+              minWidth: r.count > 0 ? 6 : 0,
+              backgroundColor: r.color,
+              opacity: hovered && hovered !== r.key ? 0.35 : 1,
+            }}
+          />
+        ))}
+      </div>
+
+      <ul className="space-y-3">
+        {rows.map((r) => {
+          const Icon = r.icon;
+          return (
+            <li
+              key={r.key}
+              onMouseEnter={() => setHovered(r.key)}
+              onMouseLeave={() => setHovered(null)}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2 -mx-3 transition-colors ${hovered === r.key ? "bg-[#FAF8F5]" : ""}`}
+            >
+              <span
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: `${r.color}1F` }}
+              >
+                <Icon size={15} style={{ color: r.color }} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm text-[#2C2826]">{r.label}</span>
+                  <span className="text-sm text-[#2C2826] tabular-nums">
+                    {r.pct.toFixed(1)}%
+                    <span className="text-xs text-[#8B8680] ml-2">{r.count.toLocaleString("it-IT")}</span>
+                  </span>
+                </div>
+                <div className="h-1 bg-[#F0EBE3] rounded-full mt-1.5 overflow-hidden">
+                  <div className="h-full rounded-full transition-all duration-700" style={{ width: `${r.pct}%`, backgroundColor: r.color }} />
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
 
 const PAGE_COLOR = "#7C6B8A";
 
 function KpiCard({ label, value, icon: Icon, sub }: { label: string; value: number; icon: React.ElementType; sub?: string }) {
   return (
-    <div className="bg-white border border-[#E8E3DC] p-6 flex flex-col gap-2">
+    <div className="bg-white border border-[#E8E3DC] p-6 flex flex-col gap-2 rounded-2xl">
       <div className="flex items-center justify-between">
         <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">{label}</p>
         <Icon size={16} className="text-[#C5BEB8]" />
@@ -98,7 +186,7 @@ export default function AnalyticsPage() {
       </p>
 
       {!hasData && (
-        <div className="bg-[#F0EBE3] border border-[#E8E3DC] p-6 mb-8 text-sm text-[#8B8680]">
+        <div className="bg-[#F0EBE3] border border-[#E8E3DC] p-6 mb-8 text-sm text-[#8B8680] rounded-2xl">
           Nessuna visita registrata ancora. I dati appariranno non appena qualcuno visita il sito.
         </div>
       )}
@@ -111,7 +199,7 @@ export default function AnalyticsPage() {
       </div>
 
       {data.timeseries.length > 0 && (
-        <div className="bg-white border border-[#E8E3DC] p-6 mb-6">
+        <div className="bg-white border border-[#E8E3DC] p-6 mb-6 rounded-2xl">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-6">Visite giornaliere — ultimi 30 giorni</p>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={data.timeseries} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
@@ -150,7 +238,7 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {data.topPages.length > 0 && (
-          <div className="bg-white border border-[#E8E3DC] p-6">
+          <div className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
             <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-6">Pagine più visitate</p>
             <ResponsiveContainer width="100%" height={data.topPages.length * 36 + 16}>
               <BarChart
@@ -174,7 +262,7 @@ export default function AnalyticsPage() {
                     "Visite",
                   ]}
                 />
-                <Bar dataKey="visits" radius={0}>
+                <Bar dataKey="visits" radius={[0, 4, 4, 0]}>
                   {data.topPages.map((_, i) => (
                     <Cell key={i} fill={PAGE_COLOR} fillOpacity={1 - i * 0.07} />
                   ))}
@@ -184,45 +272,11 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {data.devices.length > 0 && (
-          <div className="bg-white border border-[#E8E3DC] p-6">
-            <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-6">Dispositivi</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie
-                  data={data.devices}
-                  dataKey="count"
-                  nameKey="type"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={72}
-                  innerRadius={40}
-                  paddingAngle={2}
-                  label={({ type, pct }) => `${type} ${pct}%`}
-                  labelLine={false}
-                >
-                  {data.devices.map((d, i) => (
-                    <Cell key={i} fill={DEVICE_COLORS[d.type] ?? "#C5BEB8"} />
-                  ))}
-                </Pie>
-                <Legend
-                  formatter={(value) => <span style={{ fontSize: 12, color: "#2C2826" }}>{value}</span>}
-                />
-                <Tooltip
-                  contentStyle={{ border: "1px solid #E8E3DC", borderRadius: 0, fontSize: 12 }}
-                  formatter={(v: number, name: string, entry: any) => [
-                    `${v} (${entry.payload.pct}%)`,
-                    name,
-                  ]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {data.devices.length > 0 && <DeviceBreakdown devices={data.devices} />}
       </div>
 
       {data.referrers.length > 0 && (
-        <div className="bg-white border border-[#E8E3DC] p-6">
+        <div className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">Sorgenti di traffico (referrer)</p>
           <table className="w-full text-sm">
             <thead>

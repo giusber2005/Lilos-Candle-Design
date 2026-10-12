@@ -120,12 +120,12 @@ export default function DeployPage() {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && !deploying && handleDeploy()}
             placeholder="Descrizione delle modifiche…"
-            className="w-full border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#2C2826] mb-4"
+            className="w-full border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#2C2826] mb-4 rounded-xl"
           />
           <button
             onClick={handleDeploy}
             disabled={deploying || !message.trim()}
-            className="w-full bg-[#2C2826] text-white py-3 text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-[#3C3835] transition-colors disabled:opacity-50"
+            className="w-full bg-[#2C2826] text-white py-3 text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:bg-[#3C3835] transition-colors disabled:opacity-50 rounded-xl"
           >
             <Upload size={14} />
             {deploying ? "Pubblicazione in corso…" : "Pubblica su GitHub"}

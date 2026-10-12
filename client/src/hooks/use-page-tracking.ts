@@ -4,6 +4,9 @@ import { useLocation } from "wouter";
 function getDeviceType(): "mobile" | "desktop" | "tablet" {
   const ua = navigator.userAgent;
   if (/tablet|ipad|playbook|silk/i.test(ua)) return "tablet";
+  // Android tablets omit "Mobile"; iPadOS reports itself as a Mac with touch
+  if (/android/i.test(ua) && !/mobile/i.test(ua)) return "tablet";
+  if (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return "tablet";
   if (/mobile|android|iphone|ipod|blackberry|opera mini|iemobile/i.test(ua)) return "mobile";
   return "desktop";
 }

@@ -54,7 +54,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
         <button
           onClick={logout}
-          className="flex items-center gap-3 px-6 py-4 text-sm border-t border-[#3C3835] hover:text-white transition-colors"
+          className="flex items-center gap-3 px-6 py-4 text-sm border-t border-[#3C3835] rounded-none hover:text-white transition-colors"
         >
           <LogOut size={16} />
           Esci

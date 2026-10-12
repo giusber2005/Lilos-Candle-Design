@@ -47,8 +47,8 @@ export default function ProductsPage() {
   useEffect(() => {
     document.title = "Shop – LilosCandle";
     fetch("/api/products")
-      .then((r) => r.json())
-      .then(setProducts)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setProducts(Array.isArray(data) ? data : []))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -79,7 +79,7 @@ export default function ProductsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[1, 2].map((i) => (
                 <div key={i} className="animate-pulse">
-                  <div className="bg-[#E8E3DC] aspect-[4/5]" />
+                  <div className="bg-[#E8E3DC] aspect-[4/5] rounded-2xl overflow-hidden" />
                   <div className="pt-5 space-y-2">
                     <div className="h-3 bg-[#E8E3DC] w-1/3 rounded" />
                     <div className="h-6 bg-[#E8E3DC] w-2/3 rounded" />
@@ -95,17 +95,18 @@ export default function ProductsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
               {products.map((product, i) => {
-                const firstVariant = product.variants[0];
+                const variants = product.variants ?? [];
+                const firstVariant = variants[0];
                 const waxColor = firstVariant
                   ? colorMap[firstVariant.color] || firstVariant.colorHex || "#7C6B8A"
                   : "#7C6B8A";
                 return (
                   <Link key={product.id} href={`/products/${product.slug}`}>
                     <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
-                      <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)] relative">
+                      <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)] relative rounded-2xl">
                         {product.soldOut && (
-                          <div className="absolute inset-0 bg-black/10 z-10 flex items-end justify-start p-4 pointer-events-none">
-                            <span className="text-xs uppercase tracking-[0.2em] bg-[#2C2826] text-[#C5BEB8] px-3 py-1.5">Esaurito</span>
+                          <div className="absolute inset-0 bg-black/10 z-10 flex items-end justify-start p-4 pointer-events-none rounded-xl">
+                            <span className="text-xs uppercase tracking-[0.2em] bg-[#2C2826] text-[#C5BEB8] px-3 py-1.5 rounded-full">Esaurito</span>
                           </div>
                         )}
                         {product.imageUrl ? (
@@ -129,9 +130,9 @@ export default function ProductsPage() {
                           )}
                           <h2 className="font-serif text-2xl text-[#2C2826]">{product.name}</h2>
                           <p className="text-sm text-[#8B8680] mt-1 font-light">{product.shortDescription}</p>
-                          {product.variants.length > 1 && (
+                          {variants.length > 1 && (
                             <div className="flex gap-2 mt-3">
-                              {product.variants.map((v) => (
+                              {variants.map((v) => (
                                 <div
                                   key={v.id}
                                   className="w-4 h-4 rounded-full border border-[#C5BEB8]"
@@ -143,7 +144,7 @@ export default function ProductsPage() {
                           )}
                         </div>
                         <span className="font-serif text-xl text-[#2C2826] whitespace-nowrap ml-4">
-                          € {product.price.toFixed(2).replace(".", ",")}
+                          € {Number(product.price).toFixed(2).replace(".", ",")}
                         </span>
                       </div>
                     </div>

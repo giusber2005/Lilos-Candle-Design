@@ -85,7 +85,7 @@ export default function OrdersGeoSection({ orders }: Props) {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {/* Map */}
-        <div className="bg-white border border-[#E8E3DC] overflow-hidden" style={{ height: 420 }}>
+        <div className="bg-white border border-[#E8E3DC] overflow-hidden rounded-2xl" style={{ height: 420 }}>
           {mappableCount === 0 ? (
             <div className="flex items-center justify-center h-full text-sm text-[#8B8680]">
               Nessun ordine localizzabile
@@ -149,7 +149,7 @@ export default function OrdersGeoSection({ orders }: Props) {
         </div>
 
         {/* Region histogram */}
-        <div className="bg-white border border-[#E8E3DC] p-5 flex flex-col">
+        <div className="bg-white border border-[#E8E3DC] p-5 flex flex-col rounded-2xl">
           <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">Distribuzione per regione</p>
           {regionStats.length === 0 ? (
             <div className="flex-1 flex items-center justify-center text-sm text-[#8B8680]">

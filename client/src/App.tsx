@@ -7,6 +7,7 @@ import { AdminAuthProvider, useAdminAuth } from "@/lib/admin-auth";
 import { ContentProvider } from "@/lib/content-context";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { usePageTracking } from "@/hooks/use-page-tracking";
 import AdminAnalyticsPage from "@/pages/admin/AnalyticsPage";
 import HomePage from "@/pages/HomePage";
@@ -38,7 +39,9 @@ function ProtectedAdmin({ component: Component }: { component: React.ComponentTy
 }
 
 function AdminRouter() {
+  const [location] = useLocation();
   return (
+    <ErrorBoundary resetKey={location}>
     <Switch>
       <Route path="/admin" component={AdminLoginPage} />
       <Route path="/admin/dashboard">
@@ -67,15 +70,18 @@ function AdminRouter() {
       </Route>
       <Route component={NotFound} />
     </Switch>
+    </ErrorBoundary>
   );
 }
 
 function ShopRouter() {
   usePageTracking();
+  const [location] = useLocation();
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
       <main className="flex-1">
+        <ErrorBoundary resetKey={location}>
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/products" component={ProductsPage} />
@@ -88,6 +94,7 @@ function ShopRouter() {
           <Route path="/how-made" component={HowMadePage} />
           <Route component={NotFound} />
         </Switch>
+        </ErrorBoundary>
       </main>
       <Footer />
     </div>

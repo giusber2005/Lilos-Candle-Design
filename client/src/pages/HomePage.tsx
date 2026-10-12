@@ -41,8 +41,9 @@ export default function HomePage() {
 
   useEffect(() => {
     fetch("/api/products")
-      .then((r) => r.json())
-      .then((all: { id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean; soldOut: boolean }[]) => {
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: { id: number; name: string; slug: string; shortDescription: string; price: number; imageUrl: string | null; featured: boolean; soldOut: boolean }[]) => {
+        const all = Array.isArray(data) ? data : [];
         const featured = all.filter((p) => p.featured);
         setFeaturedProducts((featured.length > 0 ? featured : all).slice(0, 2));
       })
@@ -201,10 +202,10 @@ export default function HomePage() {
             {featuredProducts.map((p, i) => (
               <Link key={p.slug} href={`/products/${p.slug}`}>
                 <div className={`group cursor-pointer reveal reveal-delay-${i + 1}`}>
-                  <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)] relative">
+                  <div className="bg-[#F0EBE3] aspect-[4/5] flex items-center justify-center overflow-hidden transition-all duration-500 group-hover:shadow-[var(--shadow-lg)] relative rounded-2xl">
                     {p.soldOut && (
-                      <div className="absolute inset-0 bg-black/10 z-10 flex items-end justify-start p-4 pointer-events-none">
-                        <span className="text-xs uppercase tracking-[0.2em] bg-[#2C2826] text-[#C5BEB8] px-3 py-1.5">Esaurito</span>
+                      <div className="absolute inset-0 bg-black/10 z-10 flex items-end justify-start p-4 pointer-events-none rounded-xl">
+                        <span className="text-xs uppercase tracking-[0.2em] bg-[#2C2826] text-[#C5BEB8] px-3 py-1.5 rounded-full">Esaurito</span>
                       </div>
                     )}
                     {p.imageUrl ? (
@@ -264,12 +265,12 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="reveal reveal-delay-2 grid grid-cols-2 gap-4">
-            <div className="aspect-square overflow-hidden bg-[#3C3835]">
+            <div className="aspect-square overflow-hidden bg-[#3C3835] rounded-2xl">
               {brandImage1
                 ? <img src={brandImage1} alt="Brand" className="w-full h-full object-cover" />
                 : <div className="w-full h-full" />}
             </div>
-            <div className="aspect-square overflow-hidden bg-[#3C3835] mt-8">
+            <div className="aspect-square overflow-hidden bg-[#3C3835] mt-8 rounded-2xl">
               {brandImage2
                 ? <img src={brandImage2} alt="Brand" className="w-full h-full object-cover" />
                 : <div className="w-full h-full" />}
@@ -332,7 +333,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-12 max-w-2xl mx-auto reveal">
-            <div className="bg-[#F0EBE3] p-8 flex flex-col gap-4">
+            <div className="bg-[#F0EBE3] p-8 flex flex-col gap-4 rounded-2xl">
               <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Lascia un commento</p>
               {!commentEmailVerified ? (
                 <form onSubmit={handleEmailVerify} className="flex flex-col gap-4">
@@ -344,7 +345,7 @@ export default function HomePage() {
                     value={commentEmail}
                     onChange={(e) => { setCommentEmail(e.target.value); setCommentEmailError(""); }}
                     placeholder="La tua email"
-                    className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A]"
+                    className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] rounded-xl"
                     required
                   />
                   {commentEmailError && (
@@ -353,7 +354,7 @@ export default function HomePage() {
                   <button
                     type="submit"
                     disabled={commentEmailChecking}
-                    className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
+                    className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50 rounded-xl"
                   >
                     {commentEmailChecking ? "Verifica..." : "Verifica email"}
                   </button>
@@ -366,14 +367,14 @@ export default function HomePage() {
                     value={commentName}
                     onChange={(e) => setCommentName(e.target.value)}
                     placeholder="Il tuo nome (opzionale)"
-                    className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A]"
+                    className="bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] rounded-xl"
                     maxLength={80}
                   />
                   <textarea
                     value={commentMessage}
                     onChange={(e) => setCommentMessage(e.target.value)}
                     placeholder="Scrivi qui il tuo commento..."
-                    className="min-h-28 bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] resize-y"
+                    className="min-h-28 bg-[#FAF8F5] border border-[#D8D2CB] text-[#2C2826] placeholder-[#8B8680] px-4 py-3 focus:outline-none focus:border-[#7C6B8A] resize-y rounded-xl"
                     maxLength={600}
                     required
                   />
@@ -401,7 +402,7 @@ export default function HomePage() {
                   <button
                     type="submit"
                     disabled={commentSubmitting}
-                    className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
+                    className="self-start bg-[#7C6B8A] text-white px-6 py-3 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50 rounded-xl"
                   >
                     {commentSubmitting ? "Invio..." : "Invia commento"}
                   </button>
@@ -429,7 +430,7 @@ export default function HomePage() {
             {c["newsletter_subtitle"] || "Nuovi aromi, nuove collezioni e offerte riservate agli iscritti."}
           </p>
           {subscribed ? (
-            <div className="border border-[#7C6B8A] px-8 py-4 text-[#C5BEB8] font-serif italic">
+            <div className="border border-[#7C6B8A] px-8 py-4 text-[#C5BEB8] font-serif italic rounded-xl">
               {c["newsletter_success"] || "Grazie! Sei iscritto alla nostra newsletter."}
             </div>
           ) : (
@@ -439,13 +440,13 @@ export default function HomePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="La tua email"
-                className="flex-1 bg-[#3C3835] border border-[#4A3D35] text-white placeholder-[#6B6560] px-6 py-4 focus:outline-none focus:border-[#7C6B8A] transition-colors"
+                className="flex-1 bg-[#3C3835] border border-[#4A3D35] text-white placeholder-[#6B6560] px-6 py-4 focus:outline-none focus:border-[#7C6B8A] transition-colors rounded-xl"
                 required
               />
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-[#7C6B8A] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50"
+                className="bg-[#7C6B8A] text-white px-8 py-4 text-sm uppercase tracking-[0.15em] hover:bg-[#6B5A79] transition-colors disabled:opacity-50 rounded-xl"
               >
                 {submitting ? "..." : (c["newsletter_button"] || "Iscriviti")}
               </button>

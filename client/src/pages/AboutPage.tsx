@@ -61,7 +61,7 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="reveal reveal-delay-2">
-            <div className="bg-[#F0EBE3] aspect-square flex items-center justify-center">
+            <div className="bg-[#F0EBE3] aspect-square flex items-center justify-center rounded-2xl overflow-hidden">
               <svg width="160" height="180" viewBox="0 0 160 180" fill="none">
                 <rect width="160" height="180" rx="3" fill="url(#aboutCement)" />
                 <rect x="13" y="13" width="134" height="58" rx="2" fill="#7C6B8A" fillOpacity="0.88" />
@@ -130,7 +130,7 @@ export default function AboutPage() {
             {c["about_cta_title"] || "Prova le nostre candele."}
           </h2>
           <Link href="/products">
-            <button className="group border border-white/40 text-white px-10 py-4 text-sm uppercase tracking-[0.2em] hover:bg-white hover:text-[#2C2826] transition-all duration-300 flex items-center gap-3 mx-auto">
+            <button className="group border border-white/40 text-white px-10 py-4 text-sm uppercase tracking-[0.2em] hover:bg-white hover:text-[#2C2826] transition-all duration-300 flex items-center gap-3 mx-auto rounded-xl">
               {c["about_cta_button"] || "Scopri lo shop"}
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>

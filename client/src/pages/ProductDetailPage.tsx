@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "wouter";
 import { Minus, Plus, ShoppingBag, ArrowLeft, ZoomIn } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { CandleSizeViewer } from "@/components/CandleSizeViewer";
 
 interface Variant {
   id: number;
@@ -78,12 +79,17 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     fetch("/api/products")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
       .then((products: Product[]) => {
-        const p = products.find((x) => x.slug === slug);
+        const p = Array.isArray(products) ? products.find((x) => x.slug === slug) : undefined;
         if (!p) {
           setNotFound(true);
         } else {
+          p.variants = p.variants ?? [];
+          p.images = p.images ?? [];
           setProduct(p);
           setSelectedImage(p.imageUrl);
           if (p.variants.length > 0) setSelectedVariant(p.variants[0]);
@@ -168,7 +174,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
             <div>
               <div
-                className="bg-[#F0EBE3] aspect-square flex items-center justify-center relative group cursor-zoom-in overflow-hidden"
+                className="bg-[#F0EBE3] aspect-square flex items-center justify-center relative group cursor-zoom-in overflow-hidden rounded-2xl"
                 onClick={() => setZoom(true)}
               >
                 {selectedImage ? (
@@ -195,7 +201,7 @@ export default function ProductDetailPage() {
                       <div
                         key={i}
                         onClick={() => setSelectedImage(url)}
-                        className={`w-20 h-20 bg-[#F0EBE3] border cursor-pointer overflow-hidden transition-colors ${
+                        className={`w-20 h-20 bg-[#F0EBE3] border cursor-pointer overflow-hidden rounded-xl transition-colors ${
                           selectedImage === url ? "border-[#2C2826]" : "border-[#E8E3DC] hover:border-[#8B8680]"
                         }`}
                       >
@@ -205,6 +211,7 @@ export default function ProductDetailPage() {
                   </div>
                 );
               })()}
+              <CandleSizeViewer dimensions={product.dimensions} waxColor={waxColor} />
             </div>
 
             <div className="flex flex-col">
@@ -224,7 +231,7 @@ export default function ProductDetailPage() {
                         <span className="text-lg text-[#C5BEB8] line-through">
                           € {(basePrice * effectiveQty).toFixed(2).replace(".", ",")}
                         </span>
-                        <span className="text-xs bg-[#7C6B8A] text-white px-2 py-0.5">
+                        <span className="text-xs bg-[#7C6B8A] text-white px-2 py-0.5 rounded-full">
                           -{selectedOption.discount}%
                         </span>
                       </>
@@ -255,7 +262,7 @@ export default function ProductDetailPage() {
                         <button
                           key={v.id}
                           onClick={() => setSelectedVariant(v)}
-                          className={`flex items-center gap-2 px-4 py-2 border text-sm transition-all ${
+                          className={`flex items-center gap-2 px-4 py-2 border text-sm transition-all rounded-xl ${
                             selectedVariant?.id === v.id
                               ? "border-[#2C2826] bg-[#F0EBE3]"
                               : "border-[#E8E3DC] hover:border-[#8B8680]"
@@ -283,7 +290,7 @@ export default function ProductDetailPage() {
                         <button
                           key={`${opt.qty}-${opt.label}`}
                           onClick={() => setSelectedOption(opt)}
-                          className={`flex flex-col items-start px-5 py-3 border text-sm transition-all ${
+                          className={`flex flex-col items-start px-5 py-3 border text-sm transition-all rounded-xl ${
                             isSelected
                               ? "border-[#2C2826] bg-[#F0EBE3]"
                               : "border-[#E8E3DC] hover:border-[#8B8680]"
@@ -304,7 +311,7 @@ export default function ProductDetailPage() {
               ) : (
                 <div className="mb-8">
                   <p className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-4">Quantità</p>
-                  <div className="flex items-center gap-0 border border-[#E8E3DC] w-fit">
+                  <div className="flex items-center gap-0 border border-[#E8E3DC] w-fit rounded-xl overflow-hidden">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       className="w-11 h-11 flex items-center justify-center hover:bg-[#F0EBE3] transition-colors"
@@ -325,7 +332,7 @@ export default function ProductDetailPage() {
               )}
 
               {product.soldOut ? (
-                <div className="w-full py-4 text-sm uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-3 bg-[#E8E3DC] text-[#8B8680] cursor-not-allowed">
+                <div className="w-full py-4 text-sm uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-3 bg-[#E8E3DC] text-[#8B8680] cursor-not-allowed rounded-xl">
                   Esaurito
                 </div>
               ) : (

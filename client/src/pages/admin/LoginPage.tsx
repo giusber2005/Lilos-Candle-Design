@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
           <h1 className="font-serif text-3xl text-[#2C2826] mb-2">LilosCandle</h1>
           <p className="text-sm text-[#8B8680]">Area amministrativa</p>
         </div>
-        <form onSubmit={handleSubmit} className="bg-white border border-[#E8E3DC] p-8">
+        <form onSubmit={handleSubmit} className="bg-white border border-[#E8E3DC] p-8 rounded-2xl">
           <h2 className="text-xs uppercase tracking-[0.25em] text-[#8B8680] mb-6">Accedi</h2>
           <input
             type="password"
@@ -48,13 +48,13 @@ export default function AdminLoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] mb-4"
+            className="w-full border border-[#E8E3DC] px-4 py-3 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] mb-4 rounded-xl"
           />
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#2C2826] text-white py-3 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors disabled:opacity-50"
+            className="w-full bg-[#2C2826] text-white py-3 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-colors disabled:opacity-50 rounded-xl"
           >
             {loading ? "Accesso..." : "Entra"}
           </button>

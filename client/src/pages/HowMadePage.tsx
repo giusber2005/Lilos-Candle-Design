@@ -92,7 +92,7 @@ export default function HowMadePage() {
             {c["howmade_cta_title"] || "Pronta a portarla a casa?"}
           </h2>
           <Link href="/products">
-            <button className="group bg-[#2C2826] text-white px-10 py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-all duration-300 flex items-center gap-3 mx-auto">
+            <button className="group bg-[#2C2826] text-white px-10 py-4 text-sm uppercase tracking-[0.2em] hover:bg-[#3C3835] transition-all duration-300 flex items-center gap-3 mx-auto rounded-xl">
               {c["howmade_cta_button"] || "Acquista ora"}
               <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
             </button>

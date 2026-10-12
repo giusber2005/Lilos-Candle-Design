@@ -76,13 +76,13 @@ export default function CommentsPage() {
           <div className="w-6 h-6 border-2 border-[#2C2826] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : comments.length === 0 ? (
-        <div className="bg-white border border-[#E8E3DC] p-8 text-center text-sm text-[#8B8680]">
+        <div className="bg-white border border-[#E8E3DC] p-8 text-center text-sm text-[#8B8680] rounded-2xl">
           Nessun commento disponibile.
         </div>
       ) : (
         <div className="space-y-4">
           {comments.map((comment) => (
-            <div key={comment.id} className="bg-white border border-[#E8E3DC] p-5">
+            <div key={comment.id} className="bg-white border border-[#E8E3DC] p-5 rounded-2xl">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="font-medium text-[#2C2826]">{comment.name}</p>

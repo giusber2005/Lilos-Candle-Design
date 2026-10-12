@@ -73,7 +73,7 @@ export default function OrdersPage() {
 
       {!loading && orders.length > 0 && <OrdersGeoSection orders={orders} />}
 
-      <div className="bg-white border border-[#E8E3DC] overflow-x-auto">
+      <div className="bg-white border border-[#E8E3DC] overflow-x-auto rounded-2xl">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-6 h-6 border-2 border-[#2C2826] border-t-transparent rounded-full animate-spin" />
@@ -135,7 +135,7 @@ export default function OrdersPage() {
       {/* Order detail panel */}
       {selected && editing && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white max-w-lg w-full p-8 max-h-[90vh] overflow-y-auto rounded-2xl">
             <h2 className="font-serif text-xl text-[#2C2826] mb-1">Ordine {selected.orderNumber}</h2>
             <p className="text-sm text-[#8B8680] mb-6">{selected.email}</p>
 
@@ -155,7 +155,7 @@ export default function OrdersPage() {
                 <select
                   value={editing.status}
                   onChange={(e) => setEditing((p) => p ? { ...p, status: e.target.value } : p)}
-                  className="w-full border border-[#E8E3DC] px-3 py-2 text-sm text-[#2C2826] focus:outline-none focus:border-[#8B8680]"
+                  className="w-full border border-[#E8E3DC] px-3 py-2 text-sm text-[#2C2826] focus:outline-none focus:border-[#8B8680] rounded-xl"
                 >
                   {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -166,7 +166,7 @@ export default function OrdersPage() {
                   value={editing.tracking}
                   onChange={(e) => setEditing((p) => p ? { ...p, tracking: e.target.value } : p)}
                   placeholder="Codice tracking"
-                  className="w-full border border-[#E8E3DC] px-3 py-2 text-sm text-[#2C2826] focus:outline-none focus:border-[#8B8680]"
+                  className="w-full border border-[#E8E3DC] px-3 py-2 text-sm text-[#2C2826] focus:outline-none focus:border-[#8B8680] rounded-xl"
                 />
               </div>
             </div>
@@ -187,14 +187,14 @@ export default function OrdersPage() {
             <div className="flex gap-3 justify-end mt-6">
               <button
                 onClick={() => { setSelected(null); setEditing(null); }}
-                className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] hover:border-[#8B8680]"
+                className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] hover:border-[#8B8680] rounded-xl"
               >
                 Annulla
               </button>
               <button
                 onClick={saveOrder}
                 disabled={saving}
-                className="text-sm bg-[#2C2826] text-white px-6 py-2 hover:bg-[#3C3835] disabled:opacity-50"
+                className="text-sm bg-[#2C2826] text-white px-6 py-2 hover:bg-[#3C3835] disabled:opacity-50 rounded-xl"
               >
                 {saving ? "Salvataggio..." : "Salva"}
               </button>

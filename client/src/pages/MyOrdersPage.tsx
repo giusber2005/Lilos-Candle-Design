@@ -72,12 +72,12 @@ export default function MyOrdersPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="La tua email"
               required
-              className="flex-1 border border-[#E8E3DC] bg-white px-5 py-4 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] transition-colors"
+              className="flex-1 border border-[#E8E3DC] bg-white px-5 py-4 text-sm text-[#2C2826] placeholder-[#C5BEB8] focus:outline-none focus:border-[#8B8680] transition-colors rounded-xl"
             />
             <button
               type="submit"
               disabled={loading}
-              className="bg-[#2C2826] text-white px-6 py-4 hover:bg-[#3C3835] transition-colors disabled:opacity-50 flex items-center gap-2"
+              className="bg-[#2C2826] text-white px-6 py-4 hover:bg-[#3C3835] transition-colors disabled:opacity-50 flex items-center gap-2 rounded-xl"
             >
               {loading ? (
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -88,7 +88,7 @@ export default function MyOrdersPage() {
           </form>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 mb-8">
+            <div className="bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 mb-8 rounded-xl">
               {error}
             </div>
           )}
@@ -115,12 +115,12 @@ export default function MyOrdersPage() {
                   </p>
                   {orders.map((order) => (
                     <Link key={order.id} href={`/order/${order.id}`}>
-                      <div className="bg-white border border-[#E8E3DC] p-6 hover:border-[#8B8680] transition-colors cursor-pointer flex items-center justify-between gap-4 group">
+                      <div className="bg-white border border-[#E8E3DC] p-6 hover:border-[#8B8680] transition-colors cursor-pointer flex items-center justify-between gap-4 group rounded-2xl">
                         <div className="min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             <span className="font-serif text-lg text-[#2C2826]">{order.orderNumber}</span>
                             <span
-                              className={`text-xs px-2 py-0.5 uppercase tracking-[0.1em] ${
+                              className={`text-xs px-2 py-0.5 uppercase tracking-[0.1em] rounded-full ${
                                 statusColors[order.status] || "bg-[#F0EBE3] text-[#8B8680]"
                               }`}
                             >

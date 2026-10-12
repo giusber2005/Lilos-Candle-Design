@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import AdminLayout from "./AdminLayout";
 import { useAdminAuth, adminFetch } from "@/lib/admin-auth";
-import { KeyRound, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Loader2, ShieldAlert } from "lucide-react";
+import { KeyRound, Eye, EyeOff, Mail, CheckCircle, AlertCircle, Loader2, ShieldAlert, FileText } from "lucide-react";
 
 const DEFAULT_ORDER_SUBJECT = "Conferma ordine {{orderNumber}} — Lilo's Candle Design";
 const DEFAULT_ORDER_BODY = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#2C2826">
@@ -173,9 +173,10 @@ export default function SettingsPage() {
     <AdminLayout>
       <h1 className="font-serif text-3xl text-[#2C2826] mb-8">Impostazioni</h1>
 
-      <div className="max-w-2xl space-y-8">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+      <div className="space-y-8">
         {/* Emergency shutdown */}
-        <div className={`border p-6 ${shutdown ? "bg-red-50 border-red-200" : "bg-white border-[#E8E3DC]"}`}>
+        <div className={`border p-6 rounded-2xl ${shutdown ? "bg-red-50 border-red-200" : "bg-white border-[#E8E3DC]"}`}>
           <div className="flex items-center gap-2 mb-4">
             <ShieldAlert size={16} className={shutdown ? "text-red-500" : "text-[#8B8680]"} />
             <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Modalità manutenzione</h2>
@@ -215,13 +216,13 @@ export default function SettingsPage() {
         </div>
 
         {/* Password */}
-        <div className="bg-white border border-[#E8E3DC] p-6">
+        <div className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
           <div className="flex items-center gap-2 mb-6">
             <KeyRound size={16} className="text-[#8B8680]" />
             <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Cambia Password</h2>
           </div>
           {pwdSuccess ? (
-            <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3">
+            <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl">
               Password aggiornata. Verrai disconnesso...
             </div>
           ) : (
@@ -254,8 +255,8 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
-              {pwdError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{pwdError}</div>}
-              <button type="submit" disabled={pwdLoading} className="w-full bg-[#2C2826] text-white text-sm py-2.5 hover:bg-[#3C3835] disabled:opacity-50">
+              {pwdError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{pwdError}</div>}
+              <button type="submit" disabled={pwdLoading} className="w-full bg-[#2C2826] text-white text-sm py-2.5 hover:bg-[#3C3835] disabled:opacity-50 rounded-xl">
                 {pwdLoading ? "Aggiornamento..." : "Aggiorna password"}
               </button>
             </form>
@@ -263,7 +264,7 @@ export default function SettingsPage() {
         </div>
 
         {/* Email / SMTP */}
-        <div className="bg-white border border-[#E8E3DC] p-6">
+        <div className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
           <div className="flex items-center gap-2 mb-6">
             <Mail size={16} className="text-[#8B8680]" />
             <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Configurazione Email (SMTP)</h2>
@@ -298,7 +299,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <button onClick={handleTestSmtp} disabled={testLoading} className="text-sm border border-[#E8E3DC] text-[#8B8680] px-4 py-2 hover:border-[#8B8680] disabled:opacity-50 flex items-center gap-2">
+              <button onClick={handleTestSmtp} disabled={testLoading} className="text-sm border border-[#E8E3DC] text-[#8B8680] px-4 py-2 hover:border-[#8B8680] disabled:opacity-50 flex items-center gap-2 rounded-xl">
                 {testLoading ? <Loader2 size={14} className="animate-spin" /> : null}
                 Testa connessione
               </button>
@@ -309,12 +310,24 @@ export default function SettingsPage() {
                 </span>
               )}
             </div>
+          </div>
+        </div>
+      </div>
 
-            <h3 className="text-xs uppercase tracking-[0.2em] text-[#8B8680] pt-4 border-t border-[#E8E3DC]">
-              Template email conferma ordine
+      <div className="space-y-8">
+        {/* Email templates */}
+        <div className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
+          <div className="flex items-center gap-2 mb-6">
+            <FileText size={16} className="text-[#8B8680]" />
+            <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">Template email</h2>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-xs uppercase tracking-[0.2em] text-[#8B8680]">
+              Conferma ordine
             </h3>
             <p className="text-xs text-[#C5BEB8]">
-              Variabili disponibili: <code className="bg-[#F5F2EE] px-1">{"{{orderNumber}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{customerName}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{totalAmount}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{shippingAmount}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{itemsHtml}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{shippingAddress}}"}</code>
+              Variabili disponibili: <code className="bg-[#F5F2EE] px-1 rounded">{"{{orderNumber}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{customerName}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{totalAmount}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{shippingAmount}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{itemsHtml}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{shippingAddress}}"}</code>
             </p>
             <div>
               <label className={labelCls}>Oggetto</label>
@@ -326,10 +339,10 @@ export default function SettingsPage() {
             </div>
 
             <h3 className="text-xs uppercase tracking-[0.2em] text-[#8B8680] pt-4 border-t border-[#E8E3DC]">
-              Template newsletter predefinito
+              Newsletter predefinita
             </h3>
             <p className="text-xs text-[#C5BEB8]">
-              Variabili: <code className="bg-[#F5F2EE] px-1">{"{{firstName}}"}</code> <code className="bg-[#F5F2EE] px-1">{"{{email}}"}</code>
+              Variabili: <code className="bg-[#F5F2EE] px-1 rounded">{"{{firstName}}"}</code> <code className="bg-[#F5F2EE] px-1 rounded">{"{{email}}"}</code>
             </p>
             <div>
               <label className={labelCls}>Oggetto predefinito newsletter</label>
@@ -340,15 +353,17 @@ export default function SettingsPage() {
               <textarea value={nlDefaultBody} onChange={(e) => setNlDefaultBody(e.target.value)} rows={8} className={`${inputCls} resize-y font-mono text-xs`} />
             </div>
 
-            {emailError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">{emailError}</div>}
-            {emailSuccess && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3">Impostazioni salvate.</div>}
+            {emailError && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">{emailError}</div>}
+            {emailSuccess && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl">Impostazioni salvate.</div>}
 
-            <button onClick={handleEmailSave} disabled={emailLoading} className="bg-[#2C2826] text-white text-sm px-6 py-2.5 hover:bg-[#3C3835] disabled:opacity-50 flex items-center gap-2">
+            <button onClick={handleEmailSave} disabled={emailLoading} className="bg-[#2C2826] text-white text-sm px-6 py-2.5 hover:bg-[#3C3835] disabled:opacity-50 flex items-center gap-2 rounded-xl">
               {emailLoading ? <Loader2 size={14} className="animate-spin" /> : null}
               Salva impostazioni email
             </button>
+            <p className="text-xs text-[#C5BEB8]">Salva sia i template sia la configurazione SMTP.</p>
           </div>
         </div>
+      </div>
       </div>
     </AdminLayout>
   );

@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-10">
         {cards.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="bg-white border border-[#E8E3DC] p-6">
+          <div key={label} className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs uppercase tracking-[0.15em] text-[#8B8680]">{label}</p>
               <Icon size={16} className="text-[#C5BEB8]" />
@@ -66,7 +66,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="bg-white border border-[#E8E3DC] p-6">
+      <div className="bg-white border border-[#E8E3DC] p-6 rounded-2xl">
         <h2 className="text-xs uppercase tracking-[0.2em] text-[#8B8680] mb-5">Ordini recenti</h2>
         {!stats ? (
           <div className="flex justify-center py-8">

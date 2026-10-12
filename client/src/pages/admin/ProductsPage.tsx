@@ -48,6 +48,25 @@ const emptyProduct = {
   purchaseQuantities: [] as PurchaseOption[],
 };
 
+function slugify(text: string) {
+  return text
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const requiredFields: Array<[keyof typeof emptyProduct, string]> = [
+  ["name", "Nome"], ["slug", "Slug"], ["price", "Prezzo"], ["shortDescription", "Descrizione breve"],
+  ["description", "Descrizione"], ["size", "Dimensione"], ["material", "Materiale"],
+  ["burnTime", "Durata fiamma"], ["weight", "Peso"], ["dimensions", "Dimensioni"],
+];
+
+async function readError(r: Response) {
+  const data = await r.json().catch(() => ({}));
+  return data.error || `Errore ${r.status}`;
+}
+
 const emptyVariant = { color: "", colorHex: "#C5BEB8", aroma: "", stock: "0", imageUrl: "" };
 
 export default function ProductsPage() {
@@ -62,16 +81,24 @@ export default function ProductsPage() {
   const [deleting, setDeleting] = useState<number | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [variantError, setVariantError] = useState<string | null>(null);
 
   // variant: null = closed, object = add new, or prefilled for edit
   const [variantForms, setVariantForms] = useState<Record<number, (typeof emptyVariant & { _editId?: number }) | null>>({});
 
   const load = () => {
     setLoading(true);
+    setLoadError(null);
     adminFetch("/api/admin/products", token)
-      .then((r) => r.json())
-      .then((data) => { setProducts(Array.isArray(data) ? data : []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then(async (r) => {
+        if (!r.ok) throw new Error(await readError(r));
+        return r.json();
+      })
+      .then((data) => setProducts(Array.isArray(data) ? data : []))
+      .catch((e: Error) => setLoadError(e.message || "Impossibile caricare i prodotti"))
+      .finally(() => setLoading(false));
   };
 
   useEffect(load, [token]);
@@ -79,6 +106,7 @@ export default function ProductsPage() {
   const openNew = () => {
     setEditProduct(null);
     setForm({ ...emptyProduct });
+    setFormError(null);
     setShowForm(true);
   };
 
@@ -93,10 +121,21 @@ export default function ProductsPage() {
       soldOut: p.soldOut,
       purchaseQuantities: p.purchaseQuantities ?? [],
     });
+    setFormError(null);
     setShowForm(true);
   };
 
   const handleSave = async () => {
+    const missing = requiredFields.filter(([k]) => !String(form[k] ?? "").trim()).map(([, label]) => label);
+    if (missing.length > 0) {
+      setFormError(`Compila i campi obbligatori: ${missing.join(", ")}`);
+      return;
+    }
+    if (isNaN(parseFloat(form.price as string))) {
+      setFormError("Il prezzo non è valido");
+      return;
+    }
+    setFormError(null);
     setSaving(true);
     const body = {
       ...form,
@@ -106,17 +145,18 @@ export default function ProductsPage() {
       purchaseQuantities: form.purchaseQuantities,
     };
     try {
-      if (editProduct) {
-        await adminFetch(`/api/admin/products/${editProduct.id}`, token, {
-          method: "PATCH", body: JSON.stringify(body),
-        });
-      } else {
-        await adminFetch("/api/admin/products", token, {
-          method: "POST", body: JSON.stringify(body),
-        });
-      }
+      const r = editProduct
+        ? await adminFetch(`/api/admin/products/${editProduct.id}`, token, {
+            method: "PATCH", body: JSON.stringify(body),
+          })
+        : await adminFetch("/api/admin/products", token, {
+            method: "POST", body: JSON.stringify(body),
+          });
+      if (!r.ok) throw new Error(await readError(r));
       setShowForm(false);
       load();
+    } catch (e: any) {
+      setFormError(e.message || "Errore durante il salvataggio");
     } finally {
       setSaving(false);
     }
@@ -161,18 +201,26 @@ export default function ProductsPage() {
   const saveVariant = async (productId: number) => {
     const vf = variantForms[productId];
     if (!vf) return;
-    const body = { color: vf.color, colorHex: vf.colorHex, aroma: vf.aroma, stock: parseInt(vf.stock), imageUrl: vf.imageUrl || null };
-    if (vf._editId) {
-      await adminFetch(`/api/admin/products/${productId}/variants/${vf._editId}`, token, {
-        method: "PATCH", body: JSON.stringify(body),
-      });
-    } else {
-      await adminFetch(`/api/admin/products/${productId}/variants`, token, {
-        method: "POST", body: JSON.stringify(body),
-      });
+    if (!vf.color.trim() || !vf.aroma.trim()) {
+      setVariantError("Colore e aroma sono obbligatori");
+      return;
     }
-    setVariantForms((p) => ({ ...p, [productId]: null }));
-    load();
+    const body = { color: vf.color, colorHex: vf.colorHex, aroma: vf.aroma, stock: parseInt(vf.stock) || 0, imageUrl: vf.imageUrl || null };
+    try {
+      const r = vf._editId
+        ? await adminFetch(`/api/admin/products/${productId}/variants/${vf._editId}`, token, {
+            method: "PATCH", body: JSON.stringify(body),
+          })
+        : await adminFetch(`/api/admin/products/${productId}/variants`, token, {
+            method: "POST", body: JSON.stringify(body),
+          });
+      if (!r.ok) throw new Error(await readError(r));
+      setVariantError(null);
+      setVariantForms((p) => ({ ...p, [productId]: null }));
+      load();
+    } catch (e: any) {
+      setVariantError(e.message || "Errore durante il salvataggio della variante");
+    }
   };
 
   const deleteVariant = async (productId: number, variantId: number) => {
@@ -220,11 +268,23 @@ export default function ProductsPage() {
         <h1 className="font-serif text-3xl text-[#2C2826]">Prodotti</h1>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 bg-[#2C2826] text-white px-5 py-2.5 text-sm hover:bg-[#3C3835]"
+          className="flex items-center gap-2 bg-[#2C2826] text-white px-5 py-2.5 text-sm hover:bg-[#3C3835] rounded-xl"
         >
           <Plus size={16} /> Nuovo prodotto
         </button>
       </div>
+
+      {loadError && (
+        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+          {loadError}
+        </div>
+      )}
+
+      {variantError && (
+        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+          {variantError}
+        </div>
+      )}
 
       {deleteError && (
         <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded">
@@ -236,17 +296,21 @@ export default function ProductsPage() {
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 border-2 border-[#2C2826] border-t-transparent rounded-full animate-spin" />
         </div>
+      ) : products.length === 0 && !loadError ? (
+        <div className="text-center py-16 text-sm text-[#8B8680]">
+          Nessun prodotto ancora. Clicca su "Nuovo prodotto" per crearne uno.
+        </div>
       ) : (
         <div className="space-y-4">
           {products.map((p) => (
-            <div key={p.id} className="bg-white border border-[#E8E3DC]">
+            <div key={p.id} className="bg-white border border-[#E8E3DC] rounded-2xl overflow-hidden">
               <div className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-4">
                   {p.imageUrl && (
                     <img
                       src={p.imageUrl}
                       alt={p.name}
-                      className="w-12 h-12 object-cover border border-[#E8E3DC]"
+                      className="w-12 h-12 object-cover border border-[#E8E3DC] rounded-lg"
                       onError={(e) => { e.currentTarget.style.display = "none"; }}
                     />
                   )}
@@ -267,7 +331,7 @@ export default function ProductsPage() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleSoldOut(p)}
-                    className={`text-xs px-2 py-1 border transition-colors ${p.soldOut ? "border-[#8B8680] text-[#8B8680] hover:bg-[#8B8680] hover:text-white" : "border-[#E8E3DC] text-[#8B8680] hover:border-[#8B8680]"}`}
+                    className={`text-xs px-2 py-1 border transition-colors rounded-xl ${p.soldOut ? "border-[#8B8680] text-[#8B8680] hover:bg-[#8B8680] hover:text-white" : "border-[#E8E3DC] text-[#8B8680] hover:border-[#8B8680]"}`}
                     title={p.soldOut ? "Segna come disponibile" : "Segna come esaurito"}
                   >
                     {p.soldOut ? "Disponibile" : "Esaurito"}
@@ -287,7 +351,7 @@ export default function ProductsPage() {
                       </button>
                       <button
                         onClick={() => { setConfirmDelete(null); setDeleteError(null); }}
-                        className="text-xs text-[#8B8680] px-2 py-0.5 hover:text-[#2C2826]"
+                        className="text-xs text-[#8B8680] px-2 py-0.5 hover:text-[#2C2826] rounded-full"
                       >
                         Annulla
                       </button>
@@ -333,7 +397,7 @@ export default function ProductsPage() {
                             isEdit
                           />
                         ) : (
-                          <div className="flex items-center justify-between bg-[#FAF8F5] px-4 py-2 text-sm">
+                          <div className="flex items-center justify-between bg-[#FAF8F5] px-4 py-2 text-sm rounded-xl">
                             <div className="flex items-center gap-3">
                               <span
                                 className="w-5 h-5 rounded-full border border-[#E8E3DC] flex-shrink-0"
@@ -387,7 +451,7 @@ export default function ProductsPage() {
       {/* Product form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl">
             <div className="flex items-center justify-between px-8 py-5 border-b border-[#E8E3DC]">
               <h2 className="font-serif text-xl text-[#2C2826]">
                 {editProduct ? "Modifica prodotto" : "Nuovo prodotto"}
@@ -400,11 +464,19 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Nome *</label>
-                  <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className={inputCls} />
+                  <input
+                    value={form.name}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      // keep slug in sync with the name until the admin edits it by hand
+                      setForm((f) => ({ ...f, name, slug: !editProduct && f.slug === slugify(f.name) ? slugify(name) : f.slug }));
+                    }}
+                    className={inputCls}
+                  />
                 </div>
                 <div>
                   <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Slug *</label>
-                  <input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} className={inputCls} placeholder="es. big-boy" />
+                  <input value={form.slug} onChange={(e) => setForm((f) => ({ ...f, slug: slugify(e.target.value) }))} className={inputCls} placeholder="es. big-boy" />
                 </div>
                 <div>
                   <label className="text-xs text-[#8B8680] uppercase tracking-[0.15em] block mb-1">Prezzo (€) *</label>
@@ -458,7 +530,7 @@ export default function ProductsPage() {
                   <img
                     src={form.imageUrl as string}
                     alt="Anteprima"
-                    className="mt-2 h-24 object-cover border border-[#E8E3DC]"
+                    className="mt-2 h-24 object-cover border border-[#E8E3DC] rounded-lg"
                     onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
                 )}
@@ -489,7 +561,7 @@ export default function ProductsPage() {
                 ) : (
                   <div className="space-y-2">
                     {(form.purchaseQuantities as PurchaseOption[]).map((opt, idx) => (
-                      <div key={idx} className="grid grid-cols-[80px_1fr_100px_32px] gap-2 items-center bg-[#FAF8F5] p-3">
+                      <div key={idx} className="grid grid-cols-[80px_1fr_100px_32px] gap-2 items-center bg-[#FAF8F5] p-3 rounded-xl">
                         <div>
                           <label className="text-xs text-[#8B8680] block mb-1">Quantità</label>
                           <input
@@ -533,14 +605,19 @@ export default function ProductsPage() {
                 )}
               </div>
             </div>
+            {formError && (
+              <div className="mx-8 mb-2 text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-xl">
+                {formError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 px-8 py-5 border-t border-[#E8E3DC]">
-              <button onClick={() => setShowForm(false)} className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] hover:border-[#8B8680]">
+              <button onClick={() => setShowForm(false)} className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] hover:border-[#8B8680] rounded-xl">
                 Annulla
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="text-sm bg-[#2C2826] text-white px-6 py-2 hover:bg-[#3C3835] disabled:opacity-50"
+                className="text-sm bg-[#2C2826] text-white px-6 py-2 hover:bg-[#3C3835] disabled:opacity-50 rounded-xl"
               >
                 {saving ? "Salvataggio..." : editProduct ? "Aggiorna" : "Crea prodotto"}
               </button>
@@ -564,7 +641,7 @@ function VariantForm({
   isEdit: boolean;
 }) {
   return (
-    <div className="bg-[#F0EBE3] p-4 space-y-3">
+    <div className="bg-[#F0EBE3] p-4 space-y-3 rounded-xl">
       <p className="text-xs text-[#8B8680] uppercase tracking-[0.15em]">{isEdit ? "Modifica variante" : "Nuova variante"}</p>
       <div className="grid grid-cols-2 gap-3">
         <input
@@ -578,7 +655,7 @@ function VariantForm({
             type="color"
             value={vf.colorHex}
             onChange={(e) => onChange({ ...vf, colorHex: e.target.value })}
-            className="h-10 w-12 border border-[#E8E3DC] cursor-pointer p-1"
+            className="h-10 w-12 border border-[#E8E3DC] cursor-pointer p-1 rounded-xl"
           />
           <input
             placeholder="HEX"
@@ -610,13 +687,13 @@ function VariantForm({
       <div className="flex gap-2 justify-end">
         <button
           onClick={onCancel}
-          className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] bg-white hover:border-[#8B8680]"
+          className="text-sm text-[#8B8680] px-4 py-2 border border-[#E8E3DC] bg-white hover:border-[#8B8680] rounded-xl"
         >
           Annulla
         </button>
         <button
           onClick={onSave}
-          className="text-sm bg-[#2C2826] text-white px-5 py-2 hover:bg-[#3C3835] flex items-center gap-2"
+          className="text-sm bg-[#2C2826] text-white px-5 py-2 hover:bg-[#3C3835] flex items-center gap-2 rounded-xl"
         >
           <Check size={14} /> {isEdit ? "Aggiorna variante" : "Salva variante"}
         </button>

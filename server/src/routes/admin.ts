@@ -201,6 +201,18 @@ router.post("/products", async (req, res) => {
       name, slug, description, shortDescription, price, imageUrl, images,
       size, material, burnTime, weight, dimensions, featured, soldOut, purchaseQuantities,
     } = req.body;
+    const required = { name, slug, description, shortDescription, size, material, burnTime, weight, dimensions };
+    const missing = Object.entries(required).filter(([, v]) => typeof v !== "string" || !v.trim()).map(([k]) => k);
+    if (missing.length > 0) {
+      return res.status(400).json({ error: `Campi obbligatori mancanti: ${missing.join(", ")}` });
+    }
+    if (isNaN(parseFloat(price))) {
+      return res.status(400).json({ error: "Prezzo non valido" });
+    }
+    const [slugTaken] = await db.select({ id: productsTable.id }).from(productsTable).where(eq(productsTable.slug, slug));
+    if (slugTaken) {
+      return res.status(409).json({ error: `Lo slug "${slug}" è già usato da un altro prodotto` });
+    }
     const [product] = await db
       .insert(productsTable)
       .values({
@@ -244,6 +256,15 @@ router.patch("/products/:id", async (req, res) => {
     if (featured !== undefined) updates.featured = featured;
     if (soldOut !== undefined) updates.soldOut = soldOut;
     if (purchaseQuantities !== undefined) updates.purchaseQuantities = JSON.stringify(Array.isArray(purchaseQuantities) ? purchaseQuantities : []);
+    if (updates.price !== undefined && isNaN(updates.price)) {
+      return res.status(400).json({ error: "Prezzo non valido" });
+    }
+    if (slug !== undefined) {
+      const [slugTaken] = await db.select({ id: productsTable.id }).from(productsTable).where(eq(productsTable.slug, slug));
+      if (slugTaken && slugTaken.id !== id) {
+        return res.status(409).json({ error: `Lo slug "${slug}" è già usato da un altro prodotto` });
+      }
+    }
     const [product] = await db
       .update(productsTable)
       .set(updates)
@@ -288,9 +309,12 @@ router.post("/products/:id/variants", async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
     const { color, colorHex, aroma, stock, imageUrl } = req.body;
+    if (!color?.trim() || !aroma?.trim()) {
+      return res.status(400).json({ error: "Colore e aroma sono obbligatori" });
+    }
     const [variant] = await db
       .insert(productVariantsTable)
-      .values({ productId, color, colorHex, aroma, stock: stock || 0, imageUrl: imageUrl || null })
+      .values({ productId, color, colorHex: colorHex || "#C5BEB8", aroma, stock: Number(stock) || 0, imageUrl: imageUrl || null })
       .returning();
     res.status(201).json(variant);
   } catch (err) {
