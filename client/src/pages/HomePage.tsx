@@ -246,15 +246,15 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="reveal reveal-delay-2 grid grid-cols-2 gap-4">
-            <div className="aspect-square overflow-hidden bg-[#3C3835] rounded-2xl">
+            <div className="relative aspect-square overflow-hidden bg-[#3C3835] rounded-2xl">
               {brandImage1
                 ? <img src={brandImage1} alt="Brand" className="w-full h-full object-cover" />
-                : <div className="w-full h-full" />}
+                : <RandomImage alt="LilosCandle" />}
             </div>
-            <div className="aspect-square overflow-hidden bg-[#3C3835] mt-8 rounded-2xl">
+            <div className="relative aspect-square overflow-hidden bg-[#3C3835] mt-8 rounded-2xl">
               {brandImage2
                 ? <img src={brandImage2} alt="Brand" className="w-full h-full object-cover" />
-                : <div className="w-full h-full" />}
+                : <RandomImage alt="LilosCandle" />}
             </div>
           </div>
         </div>
